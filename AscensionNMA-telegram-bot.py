@@ -23,14 +23,14 @@ async def help_command(update, context):
 async def get_weather_time(update, context):
     zip_code = update.message.text.strip()
     
-    # Format the zip code with the country code (US in this case)
+    # Ensure that the country code is included with the zip code (default to US)
     full_zip_code = f"{zip_code},US"
 
     # Get weather data from OpenWeatherMap
     weather_params = {
         'zip': full_zip_code,
         'appid': WEATHER_API_KEY,
-        'units': 'imperial'  # Use 'metric' for Celsius
+        'units': 'imperial'  # Use 'metric' for Celsius, 'imperial' for Fahrenheit
     }
     
     weather_response = requests.get(WEATHER_API_URL, params=weather_params)
@@ -46,7 +46,7 @@ async def get_weather_time(update, context):
         temperature = weather_data['main'].get('temp')
         weather_description = weather_data['weather'][0].get('description')
 
-        # Get time data from World Time API using latitude and longitude (you can replace this with a proper timezone API if needed)
+        # Get time data from World Time API using a generic GMT time for simplicity
         time_response = requests.get(f"http://worldtimeapi.org/api/timezone/Etc/GMT")
         
         if time_response.status_code == 200:
