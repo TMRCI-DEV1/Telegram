@@ -113,10 +113,16 @@ async def get_weather_time(update: Update, context: CallbackContext):
 async def handle_channel_post(update: Update, context: CallbackContext):
     logger.info(f"Received a post in the channel: {update.channel_post.text}")
 
-    post_text = update.channel_post.text
+    post_text = update.channel_post.text.strip()
+    
+    # Check if the post is a command (starts with "/") and handle it manually
     if post_text.startswith("/"):
-        # Manually process commands posted in the channel
-        await context.dispatcher.process_update(update)
+        if post_text == "/start":
+            await start(update, context)
+        elif post_text == "/help":
+            await help_command(update, context)
+        elif post_text == "/quote":
+            await quote(update, context)
     else:
         # Respond to non-command messages
         await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Channel post received: {post_text}")
