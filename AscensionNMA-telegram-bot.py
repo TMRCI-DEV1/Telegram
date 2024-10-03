@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 # List of quotes
 QUOTES = [
     "The only limit to our realization of tomorrow is our doubts of today. - Franklin D. Roosevelt",
-    "Do not wait to strike till the iron is hot; but make it hot by striking. - William Butler Yeats",    
+    "Do not wait to strike till the iron is hot; but make it hot by striking. - William Butler Yeats",
     "Whether you think you can, or you think you can't--you're right. - Henry Ford",
     "The best way to predict the future is to invent it. - Alan Kay",
     "If ifs and buts were candies and nuts, we'd all have a Merry Fucking Christmas! - Anonymous (aka Jimmy Crypto)"
@@ -118,7 +118,6 @@ async def get_weather_time(update: Update, context: CallbackContext):
         logger.error(f"Error getting weather: {e}")
         weather_msg = await update.message.reply_text("Sorry, an error occurred while getting the weather.")
 
-    # Schedule deletion of both user message and bot's weather response
     await asyncio.create_task(schedule_message_deletion(update.message, weather_msg))
     return ConversationHandler.END
 
