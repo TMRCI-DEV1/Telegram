@@ -22,7 +22,9 @@ QUOTES = [
     "Do not wait to strike till the iron is hot; but make it hot by striking. - William Butler Yeats",
     "Whether you think you can, or you think you can't--you're right. - Henry Ford",
     "The best way to predict the future is to invent it. - Alan Kay",
-    "If ifs and buts were candies and nuts, we'd all have a Merry Fucking Christmas! - Anonymous (aka Jimmy Crypto)"
+    "If ifs and buts were candies and nuts, we'd all have a Merry Fucking Christmas! - Anonymous (aka Jimmy Crypto)",
+    "You gotta READ!!! - Tmeka",
+    "Don't die wondering. - haightKrime"
 ]
 
 # Define states for the conversation handler
