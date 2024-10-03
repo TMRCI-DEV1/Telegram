@@ -36,9 +36,7 @@ async def start(update: Update, context: CallbackContext):
         "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
         reply_markup=markup
     )
-    # Schedule deletion of command messages only
-    if update.message.text.startswith("/"):
-        asyncio.create_task(schedule_message_deletion(update, msg))
+    asyncio.create_task(schedule_message_deletion(update, msg))
 
 # Help command
 async def help_command(update: Update, context: CallbackContext):
@@ -50,21 +48,18 @@ async def help_command(update: Update, context: CallbackContext):
         "Click 'Weather' to get the current weather and time by entering your zip code."
     )
     msg = await update.message.reply_text(help_text)
-    # Schedule deletion of command messages only
-    if update.message.text.startswith("/"):
-        asyncio.create_task(schedule_message_deletion(update, msg))
+    asyncio.create_task(schedule_message_deletion(update, msg))
 
 # Quote command
 async def quote(update: Update, context: CallbackContext):
     random_quote = random.choice(QUOTES)
     msg = await update.message.reply_text(random_quote)
-    # Schedule deletion of command messages only
-    if update.message.text.startswith("/"):
-        asyncio.create_task(schedule_message_deletion(update, msg))
+    asyncio.create_task(schedule_message_deletion(update, msg))
 
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(update: Update, context: CallbackContext):
-    msg = await update.message.reply_text("Please enter your zip code to get the current weather:")
+    zip_request_msg = await update.message.reply_text("Please enter your zip code to get the current weather:")
+    asyncio.create_task(schedule_message_deletion(update, zip_request_msg))
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -89,28 +84,28 @@ async def get_weather_time(update: Update, context: CallbackContext):
             time_data = time_response.json()
             current_time = time_data['datetime']
 
-            msg = await update.message.reply_text(
+            weather_msg = await update.message.reply_text(
                 f"Weather in {city_name}, {country} (Lat: {lat}, Lon: {lon}):\n"
                 f"Temperature: {temperature}°F\n"
                 f"Description: {weather_description}\n\n"
                 f"Current Time: {current_time}"
             )
         else:
-            msg = await update.message.reply_text("Sorry, I couldn't get the time for your location.")
+            weather_msg = await update.message.reply_text("Sorry, I couldn't get the time for your location.")
     else:
-        msg = await update.message.reply_text("Invalid zip code. Please try again.")
+        weather_msg = await update.message.reply_text("Invalid zip code. Please try again.")
     
-    asyncio.create_task(schedule_message_deletion(update, msg))
+    # Schedule deletion of the user's zip code message and the bot's weather response
+    asyncio.create_task(schedule_message_deletion(update, weather_msg))
     return ConversationHandler.END
 
-# Schedule message deletion for both user and bot messages if the message is a command
+# Schedule message deletion for both user and bot messages
 async def schedule_message_deletion(update: Update, bot_message):
     user_message = update.message
     await asyncio.sleep(10)  # Wait for 10 seconds before deleting
     try:
-        if user_message.text.startswith("/"):  # Only delete if it's a command
-            await user_message.delete()
-            await bot_message.delete()
+        await user_message.delete()
+        await bot_message.delete()
     except Exception as e:
         logger.warning(f"Failed to delete message: {e}")
 
