@@ -145,7 +145,7 @@ def main():
 
     # Conversation handler for weather request
     conv_handler = ConversationHandler(
-        entry_points=[CallbackQueryHandler(request_zip_code, pattern='^weather$')],
+        entry_points=[CallbackQueryHandler(request_zip_code, pattern='weather')],
         states={GET_ZIP_CODE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_weather_time)]},
         fallbacks=[]
     )
