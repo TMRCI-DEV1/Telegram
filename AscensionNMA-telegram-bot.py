@@ -34,7 +34,7 @@ QUOTES = [
 ]
 
 # Define states for the conversation handler
-GET_ZIP_CODE = range(1)
+GET_ZIP_CODE = 1  # Define it as 1 instead of range(1)
 
 # Start command with inline buttons
 async def start(update: Update, context: CallbackContext):
@@ -68,7 +68,7 @@ async def button_callback(update: Update, context: CallbackContext):
         await quote_command(query, context)
     elif data == 'weather':
         logger.info("Weather button pressed. Transitioning to zip code request.")
-        await request_zip_code(query, context)  # Fix: added handling for the weather button
+        await request_zip_code(query, context)  # Transition to ask for zip code
     elif data == 'start':
         await start_callback(query, context)
     else:
@@ -124,8 +124,6 @@ async def start_callback(query: Update, context: CallbackContext):
 async def request_zip_code(query: Update, context: CallbackContext):
     logger.info("Weather button clicked. Asking for zip code.")
     msg = await query.message.reply_text("Please enter your zip code to get the current weather:")
-    # Store the prompt message in user_data for deletion later (if desired)
-    context.user_data['zip_code_prompt'] = msg
     asyncio.create_task(schedule_message_deletion(query.message, msg))
     return GET_ZIP_CODE  # Transition to GET_ZIP_CODE state
 
