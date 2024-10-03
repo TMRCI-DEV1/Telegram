@@ -2,10 +2,8 @@ import logging
 import requests
 import random
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
-from telegram.ext import Application, CommandHandler,   
- MessageHandler, filters, ConversationHandler, CallbackQueryHandler, CallbackContext
-import   
- asyncio
+from telegram.ext import Application, CommandHandler,    MessageHandler, filters, ConversationHandler, CallbackQueryHandler, CallbackContext
+import    asyncio
 
 # Define API keys and base URLs
 WEATHER_API_KEY = "a10a17233a99d6e36c3d99f9493fddf5"
@@ -22,7 +20,6 @@ logger = logging.getLogger(__name__)
 QUOTES = [
     "The only limit to our realization of tomorrow is our doubts of today. - Franklin D. Roosevelt",
     "Do not wait to strike till the iron is hot; but make it hot by striking. - William Butler Yeats",   
-
     "Whether you think you can, or you think you can't--you're right. - Henry Ford",
     "The best way to predict the future is to invent it. - Alan Kay",
     "If ifs and buts were candies and nuts, we'd all have a Merry Fucking Christmas! - Anonymous (aka Jimmy Crypto)"
@@ -55,7 +52,7 @@ async def button_callback(update: Update, context: CallbackContext):
     elif query.data == 'quote':
         await quote(query.message, context)
     elif query.data == 'weather':
-        await request_zip_code(query.message, context)
+        await request_zip_code(query.message, context)  # This line was misplaced
 
     await asyncio.create_task(schedule_message_deletion(query.message, query.message.reply_to_message))
 
@@ -101,24 +98,19 @@ async def get_weather_time(update: Update, context: CallbackContext):
             temperature = weather_data['main'].get('temp')
             weather_description = weather_data['weather'][0].get('description')
 
-            try:
-                time_response = requests.get(f"http://worldtimeapi.org/api/timezone/Etc/GMT")
-                if time_response.status_code == 200:
-                    time_data = time_response.json()
-                    current_time = time_data['datetime']
+            time_response = requests.get(f"http://worldtimeapi.org/api/timezone/Etc/GMT")
+            if time_response.status_code == 200:
+                time_data = time_response.json()
+                current_time = time_data['datetime']
 
-                    weather_msg = await update.message.reply_text(
-                        f"Weather in {city_name}, {country} (Lat: {lat}, Lon: {lon}):\n"
-                        f"Temperature: {temperature}°F\n"
-                        f"Description: {weather_description}\n\n"
-                        f"Current Time: {current_time}"
-                    )
-                else:
-                    weather_msg = await update.message.reply_text("Sorry, I couldn't get the time for your location.")
-            except requests.exceptions.RequestException as e:
-                logger.error(f"Error getting time: {e}")
-                weather_msg = await update.message.reply_text("Sorry, an error occurred while getting the time.")
-
+                weather_msg = await update.message.reply_text(
+                    f"Weather in {city_name}, {country} (Lat: {lat}, Lon: {lon}):\n"
+                    f"Temperature: {temperature}°F\n"
+                    f"Description: {weather_description}\n\n"
+                    f"Current Time: {current_time}"
+                )
+            else:
+                weather_msg = await update.message.reply_text("Sorry, I couldn't get the time for your location.")
         else:
             weather_msg = await update.message.reply_text("Invalid zip code. Please try again.")
 
@@ -179,4 +171,3 @@ def main():
     application.run_polling()
 
 if __name__ == '__main__':
-    main()
