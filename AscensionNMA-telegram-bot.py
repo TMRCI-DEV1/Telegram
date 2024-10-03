@@ -93,11 +93,17 @@ async def get_weather_time(update: Update, context: CallbackContext):
     
     return ConversationHandler.END
 
-# Handle regular messages in direct chat
+# Handle regular messages in direct chat (only handle commands)
 async def handle_regular_message(update: Update, context: CallbackContext):
     logger.info(f"Received a regular message: {update.message.text}")
     text = update.message.text.strip()
-    await update.message.reply_text(f"Received: {text}")
+    
+    # Ignore any message that does not start with "/"
+    if text.startswith("/"):
+        await update.message.reply_text(f"Received: {text}")
+    else:
+        # Ignore any non-command message
+        logger.info("Non-command message ignored.")
 
 def main():
     application = Application.builder().token('7823996299:AAHOsTyetmM50ZggjK2h_NWUR-Vm0gtolvY').build()
