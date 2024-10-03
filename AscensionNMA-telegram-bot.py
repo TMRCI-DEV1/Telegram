@@ -1,7 +1,7 @@
 import logging
 import requests
 import random
-from telegram import ReplyKeyboardMarkup, Update
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler, CallbackContext
 import asyncio
 
@@ -22,23 +22,38 @@ QUOTES = [
     "Do not wait to strike till the iron is hot; but make it hot by striking. - William Butler Yeats",
     "Whether you think you can, or you think you can't--you're right. - Henry Ford",
     "The best way to predict the future is to invent it. - Alan Kay",
-    "If ifs and buts were candies and nuts, we'd all have a Merry Fucking Christmas! - Anonymous (aka Jimmy Crypto)",
-    "You gotta READ!!! - Tmeka",
-    "Don't die wondering. - haightKrime"
+    "If ifs and buts were candies and nuts, we'd all have a Merry Fucking Christmas! - Anonymous (aka Jimmy Crypto)"
 ]
 
 # Define states for the conversation handler
 GET_ZIP_CODE = range(1)
 
-# Start command with persistent reply keyboard
+# Start command with persistent inline buttons
 async def start(update: Update, context: CallbackContext):
-    reply_keyboard = [['/help', '/quote', 'Weather']]
-    markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
+    inline_keyboard = [
+        [InlineKeyboardButton("Help", callback_data='help')],
+        [InlineKeyboardButton("Quote", callback_data='quote')],
+        [InlineKeyboardButton("Weather", callback_data='weather')]
+    ]
+    markup = InlineKeyboardMarkup(inline_keyboard)
     msg = await update.message.reply_text(
         "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
         reply_markup=markup
     )
+    # Schedule deletion of command messages
     asyncio.create_task(schedule_message_deletion(update, msg))
+
+# Callback query handler for inline buttons
+async def button_callback(update: Update, context: CallbackContext):
+    query = update.callback_query
+    await query.answer()  # Acknowledge the button press
+
+    if query.data == 'help':
+        await help_command(update, context)
+    elif query.data == 'quote':
+        await quote(update, context)
+    elif query.data == 'weather':
+        await request_zip_code(update, context)
 
 # Help command
 async def help_command(update: Update, context: CallbackContext):
@@ -60,8 +75,7 @@ async def quote(update: Update, context: CallbackContext):
 
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(update: Update, context: CallbackContext):
-    zip_request_msg = await update.message.reply_text("Please enter your zip code to get the current weather:")
-    asyncio.create_task(schedule_message_deletion(update, zip_request_msg))
+    msg = await update.message.reply_text("Please enter your zip code to get the current weather:")
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -97,7 +111,7 @@ async def get_weather_time(update: Update, context: CallbackContext):
     else:
         weather_msg = await update.message.reply_text("Invalid zip code. Please try again.")
     
-    # Schedule deletion of the user's zip code message and the bot's weather response
+    # Schedule deletion of the bot's weather response
     asyncio.create_task(schedule_message_deletion(update, weather_msg))
     return ConversationHandler.END
 
@@ -111,7 +125,7 @@ async def schedule_message_deletion(update: Update, bot_message):
     except Exception as e:
         logger.warning(f"Failed to delete message: {e}")
 
-# Handle regular messages in the group
+# Handle regular messages
 async def handle_regular_message(update: Update, context: CallbackContext):
     logger.info(f"Received a regular message: {update.message.text}")
     text = update.message.text.strip()
@@ -120,7 +134,6 @@ async def handle_regular_message(update: Update, context: CallbackContext):
         msg = await update.message.reply_text(f"Received: {text}")
         asyncio.create_task(schedule_message_deletion(update, msg))
     else:
-        # Ignore non-command messages
         logger.info("Non-command message received, ignoring.")
 
 def main():
@@ -129,22 +142,10 @@ def main():
     # Register the start command handler
     application.add_handler(CommandHandler('start', start))
 
-    # Register the help command handler
-    application.add_handler(CommandHandler('help', help_command))
-
-    # Register the quote command handler
-    application.add_handler(CommandHandler('quote', quote))
-
-    # Conversation handler for weather request
-    conv_handler = ConversationHandler(
-        entry_points=[MessageHandler(filters.Regex('^(Weather)$'), request_zip_code)],
-        states={GET_ZIP_CODE: [MessageHandler(filters.TEXT, get_weather_time)]},
-        fallbacks=[]
-    )
-    application.add_handler(conv_handler)
-
-    # Register handler for regular messages in the group
-    application.add_handler(MessageHandler(filters.TEXT, handle_regular_message))
+    # Register button callbacks
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_regular_message))
+    application.add_handler(MessageHandler(filters.Regex('^(Weather)$'), request_zip_code))
+    application.add_handler(MessageHandler(filters.Regex('^(quote|help)$'), button_callback))
 
     # Start the bot
     application.run_polling()
