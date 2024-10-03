@@ -116,7 +116,7 @@ async def get_weather_time(update: Update, context: CallbackContext):
 # Schedule message deletion for both user and bot messages
 async def schedule_message_deletion(update: Update, bot_message):
     user_message = update.message
-    await asyncio.sleep(60)  # Wait for 60 seconds before deleting
+    await asyncio.sleep(10)  # Wait for 10 seconds before deleting
     try:
         if user_message:
             await user_message.delete()  # Delete the user's message
