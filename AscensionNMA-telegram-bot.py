@@ -40,8 +40,8 @@ async def start(update: Update, context: CallbackContext):
         "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
         reply_markup=markup
     )
-    # Schedule deletion of command messages
-    asyncio.create_task(schedule_message_deletion(update.message, msg))
+    # Schedule deletion of the bot's response
+    await asyncio.create_task(schedule_message_deletion(update.message, msg))
 
 # Callback query handler for inline buttons
 async def button_callback(update: Update, context: CallbackContext):
@@ -65,18 +65,17 @@ async def help_command(message: Update, context: CallbackContext):
         "Click 'Weather' to get the current weather and time by entering your zip code."
     )
     msg = await message.reply_text(help_text)
-    asyncio.create_task(schedule_message_deletion(message, msg))
+    await asyncio.create_task(schedule_message_deletion(message, msg))
 
 # Quote command
 async def quote(message: Update, context: CallbackContext):
     random_quote = random.choice(QUOTES)
     msg = await message.reply_text(random_quote)
-    asyncio.create_task(schedule_message_deletion(message, msg))
+    await asyncio.create_task(schedule_message_deletion(message, msg))
 
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(message: Update, context: CallbackContext):
     msg = await message.reply_text("Please enter your zip code to get the current weather:")
-    asyncio.create_task(schedule_message_deletion(message, msg))
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -113,7 +112,7 @@ async def get_weather_time(update: Update, context: CallbackContext):
         weather_msg = await update.message.reply_text("Invalid zip code. Please try again.")
     
     # Schedule deletion of both user message and bot's weather response
-    asyncio.create_task(schedule_message_deletion(update.message, weather_msg))
+    await asyncio.create_task(schedule_message_deletion(update.message, weather_msg))
     return ConversationHandler.END
 
 # Schedule message deletion for both user and bot messages
@@ -125,15 +124,13 @@ async def schedule_message_deletion(user_message, bot_message):
     except Exception as e:
         logger.warning(f"Failed to delete message: {e}")
 
-# Handle regular messages
+# Handle direct chat commands like /start, /help, etc.
 async def handle_regular_message(update: Update, context: CallbackContext):
     logger.info(f"Received a regular message: {update.message.text}")
     text = update.message.text.strip()
     if text.startswith("/"):
         msg = await update.message.reply_text(f"Received: {text}")
-        asyncio.create_task(schedule_message_deletion(update.message, msg))
-    else:
-        logger.info("Non-command message received, ignoring.")
+        await asyncio.create_task(schedule_message_deletion(update.message, msg))
 
 def main():
     application = Application.builder().token('7823996299:AAHOsTyetmM50ZggjK2h_NWUR-Vm0gtolvY').build()
@@ -152,8 +149,8 @@ def main():
     )
     application.add_handler(conv_handler)
 
-    # Register handler for regular messages
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_regular_message))
+    # Register handler for direct commands
+    application.add_handler(MessageHandler(filters.COMMAND, handle_regular_message))
 
     # Start the bot
     application.run_polling()
