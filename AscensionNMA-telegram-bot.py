@@ -33,8 +33,10 @@ async def delete_messages(context: CallbackContext, chat_id, message_id, delay):
     await asyncio.sleep(delay)
     try:
         await context.bot.delete_message(chat_id=chat_id, message_id=message_id)
+    except telegram.error.BadRequest as e:
+        logger.error(f"Failed to delete message {message_id}: {e}. The message might have already been deleted.")
     except Exception as e:
-        logger.error(f"Failed to delete message {message_id}: {e}")
+        logger.error(f"Unexpected error occurred while trying to delete message {message_id}: {e}")
 
 # Start command with persistent reply keyboard
 async def start(update: Update, context: CallbackContext):
@@ -45,9 +47,7 @@ async def start(update: Update, context: CallbackContext):
         reply_markup=markup
     )
 
-    # Ensure the command and response have been processed fully before deletion
     await asyncio.sleep(1)
-    # Schedule auto-deletion of the user's command and the bot's response
     await delete_messages(context, update.message.chat_id, update.message.message_id, 60)
     await delete_messages(context, update.message.chat_id, response.message_id, 60)
 
@@ -63,7 +63,6 @@ async def help_command(update: Update, context: CallbackContext):
     response = await update.message.reply_text(help_text)
 
     await asyncio.sleep(1)
-    # Schedule auto-deletion
     await delete_messages(context, update.message.chat_id, update.message.message_id, 60)
     await delete_messages(context, update.message.chat_id, response.message_id, 60)
 
@@ -73,7 +72,6 @@ async def quote(update: Update, context: CallbackContext):
     response = await update.message.reply_text(random_quote)
 
     await asyncio.sleep(1)
-    # Schedule auto-deletion
     await delete_messages(context, update.message.chat_id, update.message.message_id, 60)
     await delete_messages(context, update.message.chat_id, response.message_id, 60)
 
@@ -116,7 +114,6 @@ async def get_weather_time(update: Update, context: CallbackContext):
         response = await update.message.reply_text("Invalid zip code. Please try again.")
 
     await asyncio.sleep(1)
-    # Schedule auto-deletion
     await delete_messages(context, update.message.chat_id, update.message.message_id, 60)
     await delete_messages(context, update.message.chat_id, response.message_id, 60)
 
@@ -131,7 +128,6 @@ async def handle_regular_message(update: Update, context: CallbackContext):
         response = await update.message.reply_text(f"Received: {text}")
         
         await asyncio.sleep(1)
-        # Schedule auto-deletion
         await delete_messages(context, update.message.chat_id, update.message.message_id, 60)
         await delete_messages(context, update.message.chat_id, response.message_id, 60)
     else:
