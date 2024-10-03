@@ -50,6 +50,7 @@ async def button_callback(update: Update, context: CallbackContext):
     elif query.data == 'quote':
         await quote(query, context)
     elif query.data == 'weather':
+        # Trigger zip code request for the weather
         await request_zip_code(query, context)
 
 # Help command
@@ -82,6 +83,7 @@ async def request_zip_code(update: Update, context: CallbackContext):
     # Delete the initial button query message
     asyncio.create_task(schedule_message_deletion(query.message, msg))
     
+    # Move to the next state (waiting for the user to input a zip code)
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -152,14 +154,14 @@ def main():
 
     # Conversation handler for weather request
     conv_handler = ConversationHandler(
-        entry_points=[CallbackQueryHandler(request_zip_code, pattern='^weather$')],
-        states={GET_ZIP_CODE: [MessageHandler(filters.TEXT, get_weather_time)]},
+        entry_points=[CallbackQueryHandler(request_zip_code, pattern='weather')],
+        states={GET_ZIP_CODE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_weather_time)]},
         fallbacks=[]
     )
     application.add_handler(conv_handler)
 
     # Register handler for regular messages
-    application.add_handler(MessageHandler(filters.TEXT, handle_regular_message))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_regular_message))
 
     # Start the bot
     application.run_polling()
