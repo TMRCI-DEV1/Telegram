@@ -101,15 +101,16 @@ async def get_weather_time(update: Update, context: CallbackContext):
     
     return ConversationHandler.END  # End the conversation
 
-# Handle channel posts, ensuring commands are processed in channels as well
+# Handle channel posts and commands
 async def handle_channel_post(update: Update, context: CallbackContext):
-    post_text = update.channel_post.text
-    if post_text.startswith("/"):
-        # Process command
-        await context.dispatcher.process_update(update)
-    else:
-        # Only respond to non-command messages
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Channel post received: {post_text}")
+    if update.channel_post:  # Make sure this is a post from a channel
+        post_text = update.channel_post.text
+        if post_text.startswith("/"):
+            # Manually handle commands posted in the channel
+            await context.dispatcher.process_update(update)
+        else:
+            # Respond to non-command messages
+            await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Channel post received: {post_text}")
 
 # Handle regular messages in direct chat
 async def handle_regular_message(update: Update, context: CallbackContext):
@@ -144,7 +145,7 @@ def main():
     )
     application.add_handler(conv_handler)
 
-    # Register handler for channel posts
+    # Register handler for channel posts and commands
     channel_handler = MessageHandler(filters.UpdateType.CHANNEL_POST, handle_channel_post)
     application.add_handler(channel_handler)
 
