@@ -26,7 +26,7 @@ QUOTES = [
 ]
 
 # Define states for the conversation handler
-GET_ZIP_CODE = 1
+GET_ZIP_CODE = range(1)
 
 # Start command with persistent inline buttons
 async def start(update: Update, context: CallbackContext):
