@@ -1,3 +1,4 @@
+import logging
 import requests
 import random
 from telegram import ReplyKeyboardMarkup, Update
@@ -6,6 +7,13 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 # Define API keys and base URLs
 WEATHER_API_KEY = "a10a17233a99d6e36c3d99f9493fddf5"
 WEATHER_API_URL = "http://api.openweathermap.org/data/2.5/weather"
+
+# Configure logging
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
 # List of quotes
 QUOTES = [
@@ -103,17 +111,20 @@ async def get_weather_time(update: Update, context: CallbackContext):
 
 # Handle channel posts and commands
 async def handle_channel_post(update: Update, context: CallbackContext):
-    if update.channel_post:  # Make sure this is a post from a channel
-        post_text = update.channel_post.text
-        if post_text.startswith("/"):
-            # Manually handle commands posted in the channel
-            await context.dispatcher.process_update(update)
-        else:
-            # Respond to non-command messages
-            await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Channel post received: {post_text}")
+    logger.info(f"Received a post in the channel: {update.channel_post.text}")
+
+    post_text = update.channel_post.text
+    if post_text.startswith("/"):
+        # Manually process commands posted in the channel
+        await context.dispatcher.process_update(update)
+    else:
+        # Respond to non-command messages
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Channel post received: {post_text}")
 
 # Handle regular messages in direct chat
 async def handle_regular_message(update: Update, context: CallbackContext):
+    logger.info(f"Received a regular message: {update.message.text}")
+
     text = update.message.text.strip()
     
     # Respond to the message (like the channel post) as needed
