@@ -54,8 +54,6 @@ async def button_callback(update: Update, context: CallbackContext):
     elif query.data == 'weather':
         await request_zip_code(query.message, context)
 
-    await asyncio.create_task(schedule_message_deletion(query.message, query.message.reply_to_message))
-
 # Help command
 async def help_command(message: Update, context: CallbackContext):
     help_text = (
