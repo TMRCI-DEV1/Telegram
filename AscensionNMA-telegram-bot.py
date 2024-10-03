@@ -41,7 +41,7 @@ async def start(update: Update, context: CallbackContext):
         reply_markup=markup
     )
     # Schedule deletion of the start command and bot response
-    asyncio.create_task(schedule_message_deletion(update.message, msg))
+    await schedule_message_deletion(update.message, msg)
 
 # Callback for inline buttons
 async def button_callback(update: Update, context: CallbackContext):
@@ -51,14 +51,14 @@ async def button_callback(update: Update, context: CallbackContext):
 
     # Handle callback based on the button pressed
     if query.data == 'help':
-        await help_command(query, context)
+        await help_command(update, context)
     elif query.data == 'quote':
-        await quote(query, context)
+        await quote(update, context)
     elif query.data == 'weather':
-        await request_zip_code(query, context)
+        await request_zip_code(update, context)
 
 # Help command
-async def help_command(query: Update, context: CallbackContext):
+async def help_command(update: Update, context: CallbackContext):
     logger.info("Help command triggered")
     help_text = (
         "Available commands:\n"
@@ -69,23 +69,23 @@ async def help_command(query: Update, context: CallbackContext):
     )
     keyboard = [[InlineKeyboardButton("Back", callback_data='start')]]
     markup = InlineKeyboardMarkup(keyboard)
-    msg = await query.message.reply_text(help_text, reply_markup=markup)
-    asyncio.create_task(schedule_message_deletion(query.message, msg))
+    msg = await update.callback_query.message.reply_text(help_text, reply_markup=markup)
+    await schedule_message_deletion(update.callback_query.message, msg)
 
 # Quote command
-async def quote(query: Update, context: CallbackContext):
+async def quote(update: Update, context: CallbackContext):
     logger.info("Quote command triggered")
     random_quote = random.choice(QUOTES)
     keyboard = [[InlineKeyboardButton("Back", callback_data='start')]]
     markup = InlineKeyboardMarkup(keyboard)
-    msg = await query.message.reply_text(random_quote, reply_markup=markup)
-    asyncio.create_task(schedule_message_deletion(query.message, msg))
+    msg = await update.callback_query.message.reply_text(random_quote, reply_markup=markup)
+    await schedule_message_deletion(update.callback_query.message, msg)
 
 # Handle the weather button click and prompt for zip code
-async def request_zip_code(query: Update, context: CallbackContext):
+async def request_zip_code(update: Update, context: CallbackContext):
     logger.info("Weather button clicked. Asking for zip code.")  # Log weather button press
-    msg = await query.message.reply_text("Please enter your zip code to get the current weather:")
-    asyncio.create_task(schedule_message_deletion(query.message, msg))
+    msg = await update.callback_query.message.reply_text("Please enter your zip code to get the current weather:")
+    await schedule_message_deletion(update.callback_query.message, msg)
     
     # Return GET_ZIP_CODE to transition to zip code entry state
     return GET_ZIP_CODE
@@ -117,7 +117,7 @@ async def get_weather_time(update: Update, context: CallbackContext):
         msg = await update.message.reply_text("Invalid zip code. Please try again.")
 
     # Schedule deletion of both the user input and the bot's response
-    asyncio.create_task(schedule_message_deletion(update.message, msg))
+    await schedule_message_deletion(update.message, msg)
 
     return ConversationHandler.END  # End the conversation
 
