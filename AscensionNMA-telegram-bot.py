@@ -92,38 +92,6 @@ async def get_weather_time(update: Update, context: CallbackContext):
     
     return ConversationHandler.END
 
-# Handle channel posts and commands manually
-async def handle_channel_post(update: Update, context: CallbackContext):
-    logger.info(f"Received a post in the channel: {update.channel_post.text}")
-    post_text = update.channel_post.text.strip()
-
-    # Check if the post is a command and handle manually
-    if post_text.startswith("/"):
-        if post_text == "/start":
-            await context.bot.send_message(chat_id=update.effective_chat.id, text="Greetings! Please choose a command.")
-        elif post_text == "/help":
-            help_text = (
-                "Available commands:\n"
-                "/start - Start the bot\n"
-                "/help - Get help\n"
-                "/quote - Get a random quote\n"
-                "Click 'Weather' to get the current weather and time by entering your zip code."
-            )
-            await context.bot.send_message(chat_id=update.effective_chat.id, text=help_text)
-        elif post_text == "/quote":
-            random_quote = random.choice(QUOTES)
-            await context.bot.send_message(chat_id=update.effective_chat.id, text=random_quote)
-        else:
-            await context.bot.send_message(chat_id=update.effective_chat.id, text="Unknown command.")
-    else:
-        # If not a command, assume it might be a zip code for weather
-        if post_text.isdigit() and len(post_text) == 5:
-            # Process the zip code as a weather request
-            await get_weather_time(update, context)
-        else:
-            # Respond to any other non-command message
-            await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Channel post received: {post_text}")
-
 # Handle regular messages in direct chat
 async def handle_regular_message(update: Update, context: CallbackContext):
     logger.info(f"Received a regular message: {update.message.text}")
@@ -149,9 +117,6 @@ def main():
         fallbacks=[]
     )
     application.add_handler(conv_handler)
-
-    # Register handler for channel posts and commands
-    application.add_handler(MessageHandler(filters.UpdateType.CHANNEL_POST, handle_channel_post))
 
     # Register handler for regular messages in DMs
     application.add_handler(MessageHandler(filters.TEXT, handle_regular_message))
