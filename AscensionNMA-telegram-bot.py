@@ -30,7 +30,8 @@ GET_ZIP_CODE = range(1)
 # Start command with persistent reply keyboard
 async def start(update: Update, context: CallbackContext):
     reply_keyboard = [['/help', '/quote', 'Weather']]
-    markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True)
+    # Keep the keyboard visible by setting one_time_keyboard to False
+    markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
     await update.message.reply_text(
         "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
         reply_markup=markup
