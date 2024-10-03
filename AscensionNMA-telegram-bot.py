@@ -1,6 +1,7 @@
 import logging
 import requests
 import random
+import asyncio
 from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler, CallbackContext
 
@@ -27,15 +28,23 @@ QUOTES = [
 # Define states for the conversation handler
 GET_ZIP_CODE = range(1)
 
+# Helper function to auto-delete messages
+async def delete_messages(context: CallbackContext, chat_id, message_id, delay):
+    await asyncio.sleep(delay)
+    await context.bot.delete_message(chat_id=chat_id, message_id=message_id)
+
 # Start command with persistent reply keyboard
 async def start(update: Update, context: CallbackContext):
     reply_keyboard = [['/help', '/quote', 'Weather']]
-    # Keep the keyboard visible by setting one_time_keyboard to False
     markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
-    await update.message.reply_text(
+    response = await update.message.reply_text(
         "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
         reply_markup=markup
     )
+
+    # Schedule auto-deletion of the user's command and the bot's response
+    await delete_messages(context, update.message.chat_id, update.message.message_id, 60)
+    await delete_messages(context, update.message.chat_id, response.message_id, 60)
 
 # Help command
 async def help_command(update: Update, context: CallbackContext):
@@ -46,16 +55,24 @@ async def help_command(update: Update, context: CallbackContext):
         "/quote - Get a random quote\n"
         "Click 'Weather' to get the current weather and time by entering your zip code."
     )
-    await update.message.reply_text(help_text)
+    response = await update.message.reply_text(help_text)
+
+    # Schedule auto-deletion
+    await delete_messages(context, update.message.chat_id, update.message.message_id, 60)
+    await delete_messages(context, update.message.chat_id, response.message_id, 60)
 
 # Quote command
 async def quote(update: Update, context: CallbackContext):
     random_quote = random.choice(QUOTES)
-    await update.message.reply_text(random_quote)
+    response = await update.message.reply_text(random_quote)
+
+    # Schedule auto-deletion
+    await delete_messages(context, update.message.chat_id, update.message.message_id, 60)
+    await delete_messages(context, update.message.chat_id, response.message_id, 60)
 
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(update: Update, context: CallbackContext):
-    await update.message.reply_text("Please enter your zip code to get the current weather:")
+    response = await update.message.reply_text("Please enter your zip code to get the current weather:")
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -80,17 +97,21 @@ async def get_weather_time(update: Update, context: CallbackContext):
             time_data = time_response.json()
             current_time = time_data['datetime']
 
-            await update.message.reply_text(
+            response = await update.message.reply_text(
                 f"Weather in {city_name}, {country} (Lat: {lat}, Lon: {lon}):\n"
                 f"Temperature: {temperature}°F\n"
                 f"Description: {weather_description}\n\n"
                 f"Current Time: {current_time}"
             )
         else:
-            await update.message.reply_text("Sorry, I couldn't get the time for your location.")
+            response = await update.message.reply_text("Sorry, I couldn't get the time for your location.")
     else:
-        await update.message.reply_text("Invalid zip code. Please try again.")
+        response = await update.message.reply_text("Invalid zip code. Please try again.")
     
+    # Schedule auto-deletion
+    await delete_messages(context, update.message.chat_id, update.message.message_id, 60)
+    await delete_messages(context, update.message.chat_id, response.message_id, 60)
+
     return ConversationHandler.END
 
 # Handle regular messages in direct chat (only handle commands)
@@ -98,11 +119,13 @@ async def handle_regular_message(update: Update, context: CallbackContext):
     logger.info(f"Received a regular message: {update.message.text}")
     text = update.message.text.strip()
     
-    # Ignore any message that does not start with "/"
     if text.startswith("/"):
-        await update.message.reply_text(f"Received: {text}")
+        response = await update.message.reply_text(f"Received: {text}")
+        
+        # Schedule auto-deletion
+        await delete_messages(context, update.message.chat_id, update.message.message_id, 60)
+        await delete_messages(context, update.message.chat_id, response.message_id, 60)
     else:
-        # Ignore any non-command message
         logger.info("Non-command message ignored.")
 
 def main():
