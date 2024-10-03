@@ -1,7 +1,7 @@
 import requests
 import random
-from telegram import ReplyKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler
+from telegram import ReplyKeyboardMarkup, Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler, CallbackContext
 
 # Define API keys and base URLs
 WEATHER_API_KEY = "a10a17233a99d6e36c3d99f9493fddf5"
@@ -20,7 +20,7 @@ QUOTES = [
 GET_ZIP_CODE = range(1)
 
 # Start command with persistent reply keyboard
-async def start(update, context):
+async def start(update: Update, context: CallbackContext):
     # Define the buttons for the keyboard
     reply_keyboard = [['/help', '/quote', 'Weather']]
     
@@ -33,7 +33,7 @@ async def start(update, context):
     )
 
 # Help command
-async def help_command(update, context):
+async def help_command(update: Update, context: CallbackContext):
     help_text = (
         "Available commands:\n"
         "/start - Start the bot\n"
@@ -44,17 +44,17 @@ async def help_command(update, context):
     await update.message.reply_text(help_text)
 
 # Quote command
-async def quote(update, context):
+async def quote(update: Update, context: CallbackContext):
     random_quote = random.choice(QUOTES)
     await update.message.reply_text(random_quote)
 
 # Handle the weather button click and prompt for zip code
-async def request_zip_code(update, context):
+async def request_zip_code(update: Update, context: CallbackContext):
     await update.message.reply_text("Please enter your zip code to get the current weather:")
     return GET_ZIP_CODE  # This will wait for the user to enter the zip code
 
 # Process the zip code and get the weather
-async def get_weather_time(update, context):
+async def get_weather_time(update: Update, context: CallbackContext):
     zip_code = update.message.text.strip()
     
     # Ensure that the country code is included with the zip code (default to US)
@@ -101,8 +101,18 @@ async def get_weather_time(update, context):
     
     return ConversationHandler.END  # End the conversation
 
-# Handle regular messages (in both private channel and DMs)
-async def handle_regular_message(update, context):
+# Handle channel posts, ensuring commands are processed in channels as well
+async def handle_channel_post(update: Update, context: CallbackContext):
+    post_text = update.channel_post.text
+    if post_text.startswith("/"):
+        # Process command
+        await context.dispatcher.process_update(update)
+    else:
+        # Only respond to non-command messages
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Channel post received: {post_text}")
+
+# Handle regular messages in direct chat
+async def handle_regular_message(update: Update, context: CallbackContext):
     text = update.message.text.strip()
     
     # Respond to the message (like the channel post) as needed
@@ -134,7 +144,11 @@ def main():
     )
     application.add_handler(conv_handler)
 
-    # Register handler for regular messages (commands and non-commands) in both channel and DMs
+    # Register handler for channel posts
+    channel_handler = MessageHandler(filters.UpdateType.CHANNEL_POST, handle_channel_post)
+    application.add_handler(channel_handler)
+
+    # Register handler for regular messages (commands and non-commands) in DMs
     message_handler = MessageHandler(filters.TEXT, handle_regular_message)
     application.add_handler(message_handler)
 
