@@ -36,6 +36,7 @@ async def start(update: Update, context: CallbackContext):
         "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
         reply_markup=markup
     )
+    # Schedule deletion of command messages only
     if update.message.text.startswith("/"):
         asyncio.create_task(schedule_message_deletion(update, msg))
 
@@ -49,6 +50,7 @@ async def help_command(update: Update, context: CallbackContext):
         "Click 'Weather' to get the current weather and time by entering your zip code."
     )
     msg = await update.message.reply_text(help_text)
+    # Schedule deletion of command messages only
     if update.message.text.startswith("/"):
         asyncio.create_task(schedule_message_deletion(update, msg))
 
@@ -56,13 +58,13 @@ async def help_command(update: Update, context: CallbackContext):
 async def quote(update: Update, context: CallbackContext):
     random_quote = random.choice(QUOTES)
     msg = await update.message.reply_text(random_quote)
+    # Schedule deletion of command messages only
     if update.message.text.startswith("/"):
         asyncio.create_task(schedule_message_deletion(update, msg))
 
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(update: Update, context: CallbackContext):
     msg = await update.message.reply_text("Please enter your zip code to get the current weather:")
-    asyncio.create_task(schedule_message_deletion(update, msg))  # Schedule deletion of the request message
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -102,7 +104,7 @@ async def get_weather_time(update: Update, context: CallbackContext):
         msg = await update.message.reply_text("Invalid zip code. Please try again.")
 
     # Schedule deletion of the bot's weather response
-    asyncio.create_task(schedule_message_deletion(update, msg))
+    asyncio.create_task(schedule_message_deletion(update, msg))  # Ensure bot's response is passed here
 
     return ConversationHandler.END
 
