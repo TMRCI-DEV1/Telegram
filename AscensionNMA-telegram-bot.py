@@ -41,7 +41,7 @@ async def start(update: Update, context: CallbackContext):
         reply_markup=markup
     )
     # Schedule deletion of command messages
-    asyncio.create_task(schedule_message_deletion(update, msg))
+    asyncio.create_task(schedule_message_deletion(update.message, msg))
 
 # Callback query handler for inline buttons
 async def button_callback(update: Update, context: CallbackContext):
@@ -76,6 +76,7 @@ async def quote(message: Update, context: CallbackContext):
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(message: Update, context: CallbackContext):
     msg = await message.reply_text("Please enter your zip code to get the current weather:")
+    asyncio.create_task(schedule_message_deletion(message, msg))
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -111,13 +112,12 @@ async def get_weather_time(update: Update, context: CallbackContext):
     else:
         weather_msg = await update.message.reply_text("Invalid zip code. Please try again.")
     
-    # Schedule deletion of the bot's weather response
-    asyncio.create_task(schedule_message_deletion(update, weather_msg))
+    # Schedule deletion of both user message and bot's weather response
+    asyncio.create_task(schedule_message_deletion(update.message, weather_msg))
     return ConversationHandler.END
 
 # Schedule message deletion for both user and bot messages
-async def schedule_message_deletion(update: Update, bot_message):
-    user_message = update.message
+async def schedule_message_deletion(user_message, bot_message):
     await asyncio.sleep(10)  # Wait for 10 seconds before deleting
     try:
         await user_message.delete()
@@ -129,10 +129,9 @@ async def schedule_message_deletion(update: Update, bot_message):
 async def handle_regular_message(update: Update, context: CallbackContext):
     logger.info(f"Received a regular message: {update.message.text}")
     text = update.message.text.strip()
-    # Only respond if the message starts with a /
     if text.startswith("/"):
         msg = await update.message.reply_text(f"Received: {text}")
-        asyncio.create_task(schedule_message_deletion(update, msg))
+        asyncio.create_task(schedule_message_deletion(update.message, msg))
     else:
         logger.info("Non-command message received, ignoring.")
 
