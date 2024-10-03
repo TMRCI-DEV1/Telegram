@@ -28,8 +28,8 @@ QUOTES = [
 # Define states for the conversation handler
 GET_ZIP_CODE = range(1)
 
-# Helper function to auto-delete messages
-async def delete_messages(context: CallbackContext, chat_id, message_id, delay):
+# Helper function to auto-delete messages after a delay without blocking response
+async def schedule_delete_messages(context: CallbackContext, chat_id, message_id, delay):
     await asyncio.sleep(delay)
     try:
         await context.bot.delete_message(chat_id=chat_id, message_id=message_id)
@@ -46,10 +46,9 @@ async def start(update: Update, context: CallbackContext):
         "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
         reply_markup=markup
     )
-
-    await asyncio.sleep(1)
-    await delete_messages(context, update.message.chat_id, update.message.message_id, 60)
-    await delete_messages(context, update.message.chat_id, response.message_id, 60)
+    # Schedule message deletion without delaying the response
+    asyncio.create_task(schedule_delete_messages(context, update.message.chat_id, update.message.message_id, 60))
+    asyncio.create_task(schedule_delete_messages(context, update.message.chat_id, response.message_id, 60))
 
 # Help command
 async def help_command(update: Update, context: CallbackContext):
@@ -61,19 +60,17 @@ async def help_command(update: Update, context: CallbackContext):
         "Click 'Weather' to get the current weather and time by entering your zip code."
     )
     response = await update.message.reply_text(help_text)
-
-    await asyncio.sleep(1)
-    await delete_messages(context, update.message.chat_id, update.message.message_id, 60)
-    await delete_messages(context, update.message.chat_id, response.message_id, 60)
+    # Schedule message deletion without delaying the response
+    asyncio.create_task(schedule_delete_messages(context, update.message.chat_id, update.message.message_id, 60))
+    asyncio.create_task(schedule_delete_messages(context, update.message.chat_id, response.message_id, 60))
 
 # Quote command
 async def quote(update: Update, context: CallbackContext):
     random_quote = random.choice(QUOTES)
     response = await update.message.reply_text(random_quote)
-
-    await asyncio.sleep(1)
-    await delete_messages(context, update.message.chat_id, update.message.message_id, 60)
-    await delete_messages(context, update.message.chat_id, response.message_id, 60)
+    # Schedule message deletion without delaying the response
+    asyncio.create_task(schedule_delete_messages(context, update.message.chat_id, update.message.message_id, 60))
+    asyncio.create_task(schedule_delete_messages(context, update.message.chat_id, response.message_id, 60))
 
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(update: Update, context: CallbackContext):
@@ -112,10 +109,10 @@ async def get_weather_time(update: Update, context: CallbackContext):
             response = await update.message.reply_text("Sorry, I couldn't get the time for your location.")
     else:
         response = await update.message.reply_text("Invalid zip code. Please try again.")
-
-    await asyncio.sleep(1)
-    await delete_messages(context, update.message.chat_id, update.message.message_id, 60)
-    await delete_messages(context, update.message.chat_id, response.message_id, 60)
+    
+    # Schedule message deletion without delaying the response
+    asyncio.create_task(schedule_delete_messages(context, update.message.chat_id, update.message.message_id, 60))
+    asyncio.create_task(schedule_delete_messages(context, update.message.chat_id, response.message_id, 60))
 
     return ConversationHandler.END
 
@@ -126,10 +123,9 @@ async def handle_regular_message(update: Update, context: CallbackContext):
     
     if text.startswith("/"):
         response = await update.message.reply_text(f"Received: {text}")
-        
-        await asyncio.sleep(1)
-        await delete_messages(context, update.message.chat_id, update.message.message_id, 60)
-        await delete_messages(context, update.message.chat_id, response.message_id, 60)
+        # Schedule message deletion without delaying the response
+        asyncio.create_task(schedule_delete_messages(context, update.message.chat_id, update.message.message_id, 60))
+        asyncio.create_task(schedule_delete_messages(context, update.message.chat_id, response.message_id, 60))
     else:
         logger.info("Non-command message ignored.")
 
