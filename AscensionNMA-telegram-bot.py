@@ -27,14 +27,18 @@ QUOTES = [
 # Define states for the conversation handler
 GET_ZIP_CODE = range(1)
 
-# Start command with persistent reply keyboard
+# Start command with reply keyboard in private chat
 async def start(update: Update, context: CallbackContext):
-    reply_keyboard = [['/help', '/quote', 'Weather']]
-    markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True)
-    await update.message.reply_text(
-        "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
-        reply_markup=markup
-    )
+    # Show buttons only in direct messages, not in channels
+    if update.message.chat.type == "private":
+        reply_keyboard = [['/help', '/quote', 'Weather']]
+        markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True)
+        await update.message.reply_text(
+            "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
+            reply_markup=markup
+        )
+    else:
+        await update.message.reply_text("Greetings! Use /help for available commands.")
 
 # Help command
 async def help_command(update: Update, context: CallbackContext):
@@ -43,7 +47,7 @@ async def help_command(update: Update, context: CallbackContext):
         "/start - Start the bot\n"
         "/help - Get help\n"
         "/quote - Get a random quote\n"
-        "Click 'Weather' to get the current weather and time by entering your zip code."
+        "Enter your zip code to get the current weather and time."
     )
     await update.message.reply_text(help_text)
 
@@ -51,11 +55,6 @@ async def help_command(update: Update, context: CallbackContext):
 async def quote(update: Update, context: CallbackContext):
     random_quote = random.choice(QUOTES)
     await update.message.reply_text(random_quote)
-
-# Handle the weather button click and prompt for zip code
-async def request_zip_code(update: Update, context: CallbackContext):
-    await update.message.reply_text("Please enter your zip code to get the current weather:")
-    return GET_ZIP_CODE
 
 # Process the zip code and get the weather
 async def get_weather_time(update: Update, context: CallbackContext):
@@ -69,8 +68,8 @@ async def get_weather_time(update: Update, context: CallbackContext):
         weather_data = weather_response.json()
         city_name = weather_data.get('name')
         country = weather_data['sys'].get('country')
-        lat = weather_data.get('coord').get('lat')
-        lon = weather_data.get('coord').get('lon')
+        lat = weather_data['coord'].get('lat')
+        lon = weather_data['coord'].get('lon')
         temperature = weather_data['main'].get('temp')
         weather_description = weather_data['weather'][0].get('description')
 
@@ -92,29 +91,14 @@ async def get_weather_time(update: Update, context: CallbackContext):
     
     return ConversationHandler.END
 
-# Handle channel posts and commands manually, including zip codes
+# Handle channel posts and zip codes manually
 async def handle_channel_post(update: Update, context: CallbackContext):
     logger.info(f"Received a post in the channel: {update.channel_post.text}")
     post_text = update.channel_post.text.strip()
 
     # Check if the post is a command and handle manually
     if post_text.startswith("/"):
-        if post_text == "/start":
-            await context.bot.send_message(chat_id=update.effective_chat.id, text="Greetings! Please choose a command.")
-        elif post_text == "/help":
-            help_text = (
-                "Available commands:\n"
-                "/start - Start the bot\n"
-                "/help - Get help\n"
-                "/quote - Get a random quote\n"
-                "Click 'Weather' to get the current weather and time by entering your zip code."
-            )
-            await context.bot.send_message(chat_id=update.effective_chat.id, text=help_text)
-        elif post_text == "/quote":
-            random_quote = random.choice(QUOTES)
-            await context.bot.send_message(chat_id=update.effective_chat.id, text=random_quote)
-        else:
-            await context.bot.send_message(chat_id=update.effective_chat.id, text="Unknown command.")
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Unknown command.")
     else:
         # If it's a 5-digit number, assume it's a zip code and process weather request
         if post_text.isdigit() and len(post_text) == 5:
@@ -124,7 +108,6 @@ async def handle_channel_post(update: Update, context: CallbackContext):
             fake_update = Update(update.update_id, channel_post=FakeMessage())
             await get_weather_time(fake_update, context)
         else:
-            # Respond to any other non-command message
             await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Channel post received: {post_text}")
 
 # Handle regular messages in direct chat
