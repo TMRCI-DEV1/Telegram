@@ -1,9 +1,18 @@
+import random
 import requests
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
 # Define API keys and base URLs
 WEATHER_API_KEY = "a10a17233a99d6e36c3d99f9493fddf5"
 WEATHER_API_URL = "http://api.openweathermap.org/data/2.5/weather"
+
+# List of quotes
+QUOTES = [
+    "The only limit to our realization of tomorrow is our doubts of today. - Franklin D. Roosevelt",
+    "Do not wait to strike till the iron is hot; but make it hot by striking. - William Butler Yeats",
+    "Whether you think you can, or you think you can't--you're right. - Henry Ford",
+    "The best way to predict the future is to invent it. - Alan Kay"
+]
 
 # Start command
 async def start(update, context):
@@ -15,9 +24,16 @@ async def help_command(update, context):
         "Available commands:\n"
         "/start - Start the bot\n"
         "/help - Get help\n"
+        "/quote - Get a random quote\n"
         "Send your zip code to get the current weather and time."
     )
     await update.message.reply_text(help_text)
+
+# Quote command
+async def quote(update, context):
+    # Send a random quote from the list
+    random_quote = random.choice(QUOTES)
+    await update.message.reply_text(random_quote)
 
 # Weather and time functionality
 async def get_weather_time(update, context):
@@ -76,6 +92,10 @@ def main():
     # Register the help command handler
     help_handler = CommandHandler('help', help_command)
     application.add_handler(help_handler)
+
+    # Register the quote command handler
+    quote_handler = CommandHandler('quote', quote)
+    application.add_handler(quote_handler)
 
     # Register the weather and time handler
     weather_handler = MessageHandler(filters.TEXT & ~filters.COMMAND, get_weather_time)
