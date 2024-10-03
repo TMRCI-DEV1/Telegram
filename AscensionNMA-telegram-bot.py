@@ -106,7 +106,7 @@ async def get_weather_time(update: Update, context: CallbackContext):
 # Schedule message deletion for both user and bot messages if the message is a command
 async def schedule_message_deletion(update: Update, bot_message):
     user_message = update.message
-    await asyncio.sleep(60)  # Wait for 60 seconds before deleting
+    await asyncio.sleep(10)  # Wait for 10 seconds before deleting
     try:
         if user_message.text.startswith("/"):  # Only delete if it's a command
             await user_message.delete()
