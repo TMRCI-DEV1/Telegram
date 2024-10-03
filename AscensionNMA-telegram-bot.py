@@ -194,7 +194,7 @@ def main():
     application.add_handler(CommandHandler('start', start))
 
     # Callback handler for other inline buttons (help, quote, back to start)
-    application.add_handler(CallbackQueryHandler(button_callback, pattern='^(help|quote|start)$'))
+    application.add_handler(CallbackQueryHandler(button_callback, pattern='^(help|quote|start|weather)$'))
 
     # Register the error handler
     application.add_error_handler(error_handler)
