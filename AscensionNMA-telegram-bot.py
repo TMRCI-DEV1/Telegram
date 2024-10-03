@@ -56,7 +56,7 @@ async def start(update: Update, context: CallbackContext):
     asyncio.create_task(schedule_message_deletion(update.message, msg)) 
     logger.info("Start command processed.")
 
-# Callback for inline buttons not handled by ConversationHandler
+# Callback for inline buttons
 async def button_callback(update: Update, context: CallbackContext):
     query = update.callback_query
     data = query.data
@@ -67,6 +67,8 @@ async def button_callback(update: Update, context: CallbackContext):
         await help_command(query, context)
     elif data == 'quote':
         await quote_command(query, context)
+    elif data == 'weather':
+        await request_zip_code(query, context)  # Fix: added handling for the weather button
     elif data == 'start':
         await start_callback(query, context)
     else:
