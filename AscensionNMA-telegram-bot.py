@@ -101,18 +101,12 @@ async def get_weather_time(update, context):
     
     return ConversationHandler.END  # End the conversation
 
-# Handle channel posts
-async def handle_channel_post(update, context):
-    post_text = update.channel_post.text
-    # Only respond to non-command messages
-    if post_text.startswith("/"):
-        return  # Ignore commands in the channel
-    else:
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Channel post received: {post_text}")
-
-# Handle regular messages in direct chat
-async def handle_direct_message(update, context):
-    await update.message.reply_text("You are chatting directly with the bot.")
+# Handle regular messages (in both private channel and DMs)
+async def handle_regular_message(update, context):
+    text = update.message.text.strip()
+    
+    # Respond to the message (like the channel post) as needed
+    await update.message.reply_text(f"Received: {text}")
 
 def main():
     # Create the application with the bot token
@@ -140,13 +134,9 @@ def main():
     )
     application.add_handler(conv_handler)
 
-    # Register a handler for non-command channel posts
-    channel_handler = MessageHandler(filters.UpdateType.CHANNEL_POST, handle_channel_post)
-    application.add_handler(channel_handler)
-
-    # Register a handler for direct messages
-    direct_message_handler = MessageHandler(filters.TEXT & ~filters.COMMAND, handle_direct_message)
-    application.add_handler(direct_message_handler)
+    # Register handler for regular messages (commands and non-commands) in both channel and DMs
+    message_handler = MessageHandler(filters.TEXT, handle_regular_message)
+    application.add_handler(message_handler)
 
     # Start the bot and run it until you press Ctrl+C
     application.run_polling()
