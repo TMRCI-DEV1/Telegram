@@ -31,13 +31,11 @@ GET_ZIP_CODE = range(1)
 # Start command with persistent reply keyboard
 async def start(update: Update, context: CallbackContext):
     reply_keyboard = [['/help', '/quote', 'Weather']]
-    # Keep the keyboard visible by setting one_time_keyboard to False
     markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
     msg = await update.message.reply_text(
         "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
         reply_markup=markup
     )
-    # Schedule deletion of command messages only
     if update.message.text.startswith("/"):
         asyncio.create_task(schedule_message_deletion(update, msg))
 
@@ -51,7 +49,6 @@ async def help_command(update: Update, context: CallbackContext):
         "Click 'Weather' to get the current weather and time by entering your zip code."
     )
     msg = await update.message.reply_text(help_text)
-    # Schedule deletion of command messages only
     if update.message.text.startswith("/"):
         asyncio.create_task(schedule_message_deletion(update, msg))
 
@@ -59,13 +56,13 @@ async def help_command(update: Update, context: CallbackContext):
 async def quote(update: Update, context: CallbackContext):
     random_quote = random.choice(QUOTES)
     msg = await update.message.reply_text(random_quote)
-    # Schedule deletion of command messages only
     if update.message.text.startswith("/"):
         asyncio.create_task(schedule_message_deletion(update, msg))
 
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(update: Update, context: CallbackContext):
     msg = await update.message.reply_text("Please enter your zip code to get the current weather:")
+    asyncio.create_task(schedule_message_deletion(update, msg))  # Schedule deletion of the request message
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -75,7 +72,10 @@ async def get_weather_time(update: Update, context: CallbackContext):
 
     weather_params = {'zip': full_zip_code, 'appid': WEATHER_API_KEY, 'units': 'imperial'}
     weather_response = requests.get(WEATHER_API_URL, params=weather_params)
-    
+
+    # Schedule deletion of the user's zip code input
+    asyncio.create_task(schedule_message_deletion(update, None))  # Deleting user's zip code input
+
     if weather_response.status_code == 200:
         weather_data = weather_response.json()
         city_name = weather_data.get('name')
@@ -100,21 +100,21 @@ async def get_weather_time(update: Update, context: CallbackContext):
             msg = await update.message.reply_text("Sorry, I couldn't get the time for your location.")
     else:
         msg = await update.message.reply_text("Invalid zip code. Please try again.")
-    
-    # Schedule deletion of command messages only
-    if update.message.text.startswith("/"):
-        asyncio.create_task(schedule_message_deletion(update, msg))
+
+    # Schedule deletion of the bot's weather response
+    asyncio.create_task(schedule_message_deletion(update, msg))
 
     return ConversationHandler.END
 
-# Schedule message deletion for both user and bot messages if the message is a command
+# Schedule message deletion for both user and bot messages
 async def schedule_message_deletion(update: Update, bot_message):
     user_message = update.message
-    await asyncio.sleep(10)  # Wait for 60 seconds before deleting
+    await asyncio.sleep(10)  # Wait for 10 seconds before deleting
     try:
-        if user_message.text.startswith("/"):  # Only delete if it's a command
-            await user_message.delete()
-            await bot_message.delete()
+        if user_message:
+            await user_message.delete()  # Delete the user's zip code input
+        if bot_message:
+            await bot_message.delete()  # Delete the bot's weather response
     except Exception as e:
         logger.warning(f"Failed to delete message: {e}")
 
@@ -123,7 +123,6 @@ async def handle_regular_message(update: Update, context: CallbackContext):
     logger.info(f"Received a regular message: {update.message.text}")
     text = update.message.text.strip()
     msg = await update.message.reply_text(f"Received: {text}")
-    # No need to schedule deletion here for regular messages
 
 def main():
     application = Application.builder().token('7823996299:AAHOsTyetmM50ZggjK2h_NWUR-Vm0gtolvY').build()
