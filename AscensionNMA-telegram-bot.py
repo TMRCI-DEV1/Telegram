@@ -76,11 +76,11 @@ async def get_weather_time(update: Update, context: CallbackContext):
     weather_params = {'zip': full_zip_code, 'appid': WEATHER_API_KEY, 'units': 'imperial'}
     weather_response = requests.get(WEATHER_API_URL, params=weather_params)
 
-    # Schedule deletion of the user's zip code input
-    asyncio.create_task(schedule_message_deletion(update, None))  # Deleting user's zip code input
-
     reply_keyboard = [['/help', '/quote', 'Weather']]
     markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
+
+    # Deleting user's zip code input immediately after getting the weather response
+    asyncio.create_task(schedule_message_deletion(update, None))  # Deleting user's zip code input
 
     if weather_response.status_code == 200:
         weather_data = weather_response.json()
@@ -108,7 +108,7 @@ async def get_weather_time(update: Update, context: CallbackContext):
     else:
         msg = await update.message.reply_text("Invalid zip code. Please try again.", reply_markup=markup)
 
-    # Schedule deletion of the weather response and user's zip code
+    # Schedule deletion of both the weather response and user's zip code input
     asyncio.create_task(schedule_message_deletion(update, msg))
 
     return ConversationHandler.END
