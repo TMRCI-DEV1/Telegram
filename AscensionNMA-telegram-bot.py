@@ -26,7 +26,7 @@ QUOTES = [
 ]
 
 # Define states for the conversation handler
-GET_ZIP_CODE = range(1)
+GET_ZIP_CODE = 1
 
 # Start command with persistent inline buttons
 async def start(update: Update, context: CallbackContext):
@@ -146,7 +146,7 @@ def main():
 
     # Conversation handler for weather request
     conv_handler = ConversationHandler(
-        entry_points=[MessageHandler(filters.Regex('^(Weather)$'), request_zip_code)],
+        entry_points=[CallbackQueryHandler(request_zip_code, pattern='^weather$')],
         states={GET_ZIP_CODE: [MessageHandler(filters.TEXT, get_weather_time)]},
         fallbacks=[]
     )
