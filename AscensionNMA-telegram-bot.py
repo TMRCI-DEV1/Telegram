@@ -97,27 +97,32 @@ async def handle_channel_post(update: Update, context: CallbackContext):
     logger.info(f"Received a post in the channel: {update.channel_post.text}")
     post_text = update.channel_post.text.strip()
 
-    # Check for commands in the channel post
-    if post_text == "/start":
-        # Manually simulate the start command
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="Greetings! Please choose a command.")
-    elif post_text == "/help":
-        # Manually simulate the help command
-        help_text = (
-            "Available commands:\n"
-            "/start - Start the bot\n"
-            "/help - Get help\n"
-            "/quote - Get a random quote\n"
-            "Click 'Weather' to get the current weather and time by entering your zip code."
-        )
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=help_text)
-    elif post_text == "/quote":
-        # Manually simulate the quote command
-        random_quote = random.choice(QUOTES)
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=random_quote)
+    # Check if the post is a command and handle manually
+    if post_text.startswith("/"):
+        if post_text == "/start":
+            await context.bot.send_message(chat_id=update.effective_chat.id, text="Greetings! Please choose a command.")
+        elif post_text == "/help":
+            help_text = (
+                "Available commands:\n"
+                "/start - Start the bot\n"
+                "/help - Get help\n"
+                "/quote - Get a random quote\n"
+                "Click 'Weather' to get the current weather and time by entering your zip code."
+            )
+            await context.bot.send_message(chat_id=update.effective_chat.id, text=help_text)
+        elif post_text == "/quote":
+            random_quote = random.choice(QUOTES)
+            await context.bot.send_message(chat_id=update.effective_chat.id, text=random_quote)
+        else:
+            await context.bot.send_message(chat_id=update.effective_chat.id, text="Unknown command.")
     else:
-        # Respond to non-command messages
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Channel post received: {post_text}")
+        # If not a command, assume it might be a zip code for weather
+        if post_text.isdigit() and len(post_text) == 5:
+            # Process the zip code as a weather request
+            await get_weather_time(update, context)
+        else:
+            # Respond to any other non-command message
+            await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Channel post received: {post_text}")
 
 # Handle regular messages in direct chat
 async def handle_regular_message(update: Update, context: CallbackContext):
