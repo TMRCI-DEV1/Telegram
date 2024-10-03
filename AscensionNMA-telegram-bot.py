@@ -43,13 +43,12 @@ async def start(update: Update, context: CallbackContext):
         "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
         reply_markup=markup
     )
-    # Schedule deletion of both user message and bot's response
     await asyncio.create_task(schedule_message_deletion(update.message, msg))
 
 # Callback query handler for inline buttons
 async def button_callback(update: Update, context: CallbackContext):
     query = update.callback_query
-    await query.answer()  # Acknowledge the button press immediately
+    await query.answer()
 
     if query.data == 'help':
         await help_command(query.message, context)
@@ -58,7 +57,6 @@ async def button_callback(update: Update, context: CallbackContext):
     elif query.data == 'weather':
         await request_zip_code(query.message, context)
 
-    # Schedule deletion of both user message and bot's response
     await asyncio.create_task(schedule_message_deletion(query.message, query.message.reply_to_message))
 
 # Help command
@@ -71,19 +69,18 @@ async def help_command(message: Update, context: CallbackContext):
         "Click 'Weather' to get the current weather and time by entering your zip code."
     )
     msg = await message.reply_text(help_text)
-    await asyncio.create_task(schedule_message_deletion(message, msg))  # Schedule deletion here
+    await asyncio.create_task(schedule_message_deletion(message, msg))
 
 # Quote command
 async def quote(message: Update, context: CallbackContext):
     random_quote = random.choice(QUOTES)
     msg = await message.reply_text(random_quote)
-    await asyncio.create_task(schedule_message_deletion(message, msg))  # Schedule deletion here
+    await asyncio.create_task(schedule_message_deletion(message, msg))
 
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(message: Update, context: CallbackContext):
     msg = await message.reply_text("Please enter your zip code to get the current weather:")
-    # Schedule deletion of both the bot's message and the user's upcoming reply
-    await asyncio.create_task(schedule_message_deletion(message, msg))  
+    await asyncio.create_task(schedule_message_deletion(message, msg))
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -97,16 +94,24 @@ async def get_weather_time(update: Update, context: CallbackContext):
 
         if weather_response.status_code == 200:
             weather_data = weather_response.json()
-            # ... (extract weather data as before) ...
+            city_name = weather_data.get('name')
+            country = weather_data['sys'].get('country')
+            lat = weather_data['coord'].get('lat')
+            lon = weather_data['coord'].get('lon')
+            temperature = weather_data['main'].get('temp')
+            weather_description = weather_data['weather'][0].get('description')
 
             try:
                 time_response = requests.get(f"http://worldtimeapi.org/api/timezone/Etc/GMT")
                 if time_response.status_code == 200:
                     time_data = time_response.json()
-                    # ... (extract time data as before) ...
+                    current_time = time_data['datetime']
 
                     weather_msg = await update.message.reply_text(
-                        # ... (format weather message as before) ...
+                        f"Weather in {city_name}, {country} (Lat: {lat}, Lon: {lon}):\n"
+                        f"Temperature: {temperature}°F\n"
+                        f"Description: {weather_description}\n\n"
+                        f"Current Time: {current_time}"
                     )
                 else:
                     weather_msg = await update.message.reply_text("Sorry, I couldn't get the time for your location.")
