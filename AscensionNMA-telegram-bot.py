@@ -40,13 +40,12 @@ async def start(update: Update, context: CallbackContext):
         "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
         reply_markup=markup
     )
-    # Schedule deletion of the bot's response
     await asyncio.create_task(schedule_message_deletion(update.message, msg))
 
 # Callback query handler for inline buttons
 async def button_callback(update: Update, context: CallbackContext):
     query = update.callback_query
-    await query.answer()  # Acknowledge the button press
+    await query.answer()  # Acknowledge the button press immediately
 
     if query.data == 'help':
         await help_command(query.message, context)
@@ -124,13 +123,22 @@ async def schedule_message_deletion(user_message, bot_message):
     except Exception as e:
         logger.warning(f"Failed to delete message: {e}")
 
-# Handle direct chat commands like /start, /help, etc.
+# Handle regular commands and remove the unnecessary "Received" messages
 async def handle_regular_message(update: Update, context: CallbackContext):
     logger.info(f"Received a regular message: {update.message.text}")
     text = update.message.text.strip()
     if text.startswith("/"):
-        msg = await update.message.reply_text(f"Received: {text}")
-        await asyncio.create_task(schedule_message_deletion(update.message, msg))
+        # Handle commands without sending "Received" messages
+        command = text[1:]
+        if command == "help":
+            await help_command(update.message, context)
+        elif command == "quote":
+            await quote(update.message, context)
+        elif command == "start":
+            await start(update.message, context)
+        else:
+            msg = await update.message.reply_text(f"Unknown command: {command}")
+            await asyncio.create_task(schedule_message_deletion(update.message, msg))
 
 def main():
     application = Application.builder().token('7823996299:AAHOsTyetmM50ZggjK2h_NWUR-Vm0gtolvY').build()
@@ -149,7 +157,7 @@ def main():
     )
     application.add_handler(conv_handler)
 
-    # Register handler for direct commands
+    # Register handler for regular commands (without 'Received' messages)
     application.add_handler(MessageHandler(filters.COMMAND, handle_regular_message))
 
     # Start the bot
