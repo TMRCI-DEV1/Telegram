@@ -136,8 +136,8 @@ def main():
     )
     application.add_handler(conv_handler)
 
-    # Register a handler for channel posts
-    channel_handler = MessageHandler(filters.CHANNEL_POST, handle_channel_post)
+    # Register a handler for channel posts using UpdateType.CHANNEL_POST
+    channel_handler = MessageHandler(filters.UpdateType.CHANNEL_POST, handle_channel_post)
     application.add_handler(channel_handler)
 
     # Register a handler for direct messages
