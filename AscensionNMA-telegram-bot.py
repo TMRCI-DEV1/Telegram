@@ -36,7 +36,7 @@ async def start(update: Update, context: CallbackContext):
         "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
         reply_markup=markup
     )
-    asyncio.create_task(schedule_message_deletion(update, msg))
+    asyncio.create_task(schedule_message_deletion(update.message, msg))
 
 # Help command
 async def help_command(update: Update, context: CallbackContext):
@@ -50,7 +50,7 @@ async def help_command(update: Update, context: CallbackContext):
         "Click 'Weather' to get the current weather and time by entering your zip code."
     )
     msg = await update.message.reply_text(help_text, reply_markup=markup)
-    asyncio.create_task(schedule_message_deletion(update, msg))
+    asyncio.create_task(schedule_message_deletion(update.message, msg))
 
 # Quote command
 async def quote(update: Update, context: CallbackContext):
@@ -58,14 +58,14 @@ async def quote(update: Update, context: CallbackContext):
     markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
     random_quote = random.choice(QUOTES)
     msg = await update.message.reply_text(random_quote, reply_markup=markup)
-    asyncio.create_task(schedule_message_deletion(update, msg))
+    asyncio.create_task(schedule_message_deletion(update.message, msg))
 
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(update: Update, context: CallbackContext):
     reply_keyboard = [['/help', '/quote', 'Weather']]
     markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
     msg = await update.message.reply_text("Please enter your zip code to get the current weather:", reply_markup=markup)
-    asyncio.create_task(schedule_message_deletion(update, msg))
+    asyncio.create_task(schedule_message_deletion(update.message, msg))
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -78,9 +78,6 @@ async def get_weather_time(update: Update, context: CallbackContext):
 
     reply_keyboard = [['/help', '/quote', 'Weather']]
     markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
-
-    # Deleting user's zip code input immediately after getting the weather response
-    asyncio.create_task(schedule_message_deletion(update, None))  # Deleting user's zip code input
 
     if weather_response.status_code == 200:
         weather_data = weather_response.json()
@@ -108,14 +105,13 @@ async def get_weather_time(update: Update, context: CallbackContext):
     else:
         msg = await update.message.reply_text("Invalid zip code. Please try again.", reply_markup=markup)
 
-    # Schedule deletion of both the weather response and user's zip code input
-    asyncio.create_task(schedule_message_deletion(update, msg))
+    # Schedule deletion of both the user input and the bot's response
+    asyncio.create_task(schedule_message_deletion(update.message, msg))
 
     return ConversationHandler.END
 
 # Schedule message deletion for both user and bot messages
-async def schedule_message_deletion(update: Update, bot_message):
-    user_message = update.message
+async def schedule_message_deletion(user_message, bot_message):
     await asyncio.sleep(10)  # Wait for 10 seconds before deleting
     try:
         if user_message:
