@@ -36,12 +36,12 @@ async def start(update: Update, context: CallbackContext):
         "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
         reply_markup=markup
     )
-    asyncio.create_task(schedule_message_deletion(update.message, msg))
+    # Schedule deletion of command messages only
+    if update.message.text.startswith("/"):
+        asyncio.create_task(schedule_message_deletion(update, msg))
 
 # Help command
 async def help_command(update: Update, context: CallbackContext):
-    reply_keyboard = [['/help', '/quote', 'Weather']]
-    markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
     help_text = (
         "Available commands:\n"
         "/start - Start the bot\n"
@@ -49,23 +49,22 @@ async def help_command(update: Update, context: CallbackContext):
         "/quote - Get a random quote\n"
         "Click 'Weather' to get the current weather and time by entering your zip code."
     )
-    msg = await update.message.reply_text(help_text, reply_markup=markup)
-    asyncio.create_task(schedule_message_deletion(update.message, msg))
+    msg = await update.message.reply_text(help_text)
+    # Schedule deletion of command messages only
+    if update.message.text.startswith("/"):
+        asyncio.create_task(schedule_message_deletion(update, msg))
 
 # Quote command
 async def quote(update: Update, context: CallbackContext):
-    reply_keyboard = [['/help', '/quote', 'Weather']]
-    markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
     random_quote = random.choice(QUOTES)
-    msg = await update.message.reply_text(random_quote, reply_markup=markup)
-    asyncio.create_task(schedule_message_deletion(update.message, msg))
+    msg = await update.message.reply_text(random_quote)
+    # Schedule deletion of command messages only
+    if update.message.text.startswith("/"):
+        asyncio.create_task(schedule_message_deletion(update, msg))
 
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(update: Update, context: CallbackContext):
-    reply_keyboard = [['/help', '/quote', 'Weather']]
-    markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
-    msg = await update.message.reply_text("Please enter your zip code to get the current weather:", reply_markup=markup)
-    asyncio.create_task(schedule_message_deletion(update.message, msg))
+    msg = await update.message.reply_text("Please enter your zip code to get the current weather:")
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -75,10 +74,7 @@ async def get_weather_time(update: Update, context: CallbackContext):
 
     weather_params = {'zip': full_zip_code, 'appid': WEATHER_API_KEY, 'units': 'imperial'}
     weather_response = requests.get(WEATHER_API_URL, params=weather_params)
-
-    reply_keyboard = [['/help', '/quote', 'Weather']]
-    markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
-
+    
     if weather_response.status_code == 200:
         weather_data = weather_response.json()
         city_name = weather_data.get('name')
@@ -97,37 +93,38 @@ async def get_weather_time(update: Update, context: CallbackContext):
                 f"Weather in {city_name}, {country} (Lat: {lat}, Lon: {lon}):\n"
                 f"Temperature: {temperature}°F\n"
                 f"Description: {weather_description}\n\n"
-                f"Current Time: {current_time}",
-                reply_markup=markup
+                f"Current Time: {current_time}"
             )
         else:
-            msg = await update.message.reply_text("Sorry, I couldn't get the time for your location.", reply_markup=markup)
+            msg = await update.message.reply_text("Sorry, I couldn't get the time for your location.")
     else:
-        msg = await update.message.reply_text("Invalid zip code. Please try again.", reply_markup=markup)
-
-    # Schedule deletion of both the user input and the bot's response
-    asyncio.create_task(schedule_message_deletion(update.message, msg))
-
+        msg = await update.message.reply_text("Invalid zip code. Please try again.")
+    
+    asyncio.create_task(schedule_message_deletion(update, msg))
     return ConversationHandler.END
 
-# Schedule message deletion for both user and bot messages
-async def schedule_message_deletion(user_message, bot_message):
-    await asyncio.sleep(10)  # Wait for 10 seconds before deleting
+# Schedule message deletion for both user and bot messages if the message is a command
+async def schedule_message_deletion(update: Update, bot_message):
+    user_message = update.message
+    await asyncio.sleep(60)  # Wait for 60 seconds before deleting
     try:
-        if user_message:
-            await user_message.delete()  # Delete the user's message
-        if bot_message:
-            await bot_message.delete()  # Delete the bot's response
+        if user_message.text.startswith("/"):  # Only delete if it's a command
+            await user_message.delete()
+            await bot_message.delete()
     except Exception as e:
         logger.warning(f"Failed to delete message: {e}")
 
-# Handle regular messages in direct chat
+# Handle regular messages in the group
 async def handle_regular_message(update: Update, context: CallbackContext):
     logger.info(f"Received a regular message: {update.message.text}")
     text = update.message.text.strip()
-    reply_keyboard = [['/help', '/quote', 'Weather']]
-    markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
-    msg = await update.message.reply_text(f"Received: {text}", reply_markup=markup)
+    # Only respond if the message starts with a /
+    if text.startswith("/"):
+        msg = await update.message.reply_text(f"Received: {text}")
+        asyncio.create_task(schedule_message_deletion(update, msg))
+    else:
+        # Ignore non-command messages
+        logger.info("Non-command message received, ignoring.")
 
 def main():
     application = Application.builder().token('7823996299:AAHOsTyetmM50ZggjK2h_NWUR-Vm0gtolvY').build()
@@ -149,7 +146,7 @@ def main():
     )
     application.add_handler(conv_handler)
 
-    # Register handler for regular messages in DMs
+    # Register handler for regular messages in the group
     application.add_handler(MessageHandler(filters.TEXT, handle_regular_message))
 
     # Start the bot
