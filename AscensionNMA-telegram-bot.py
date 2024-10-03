@@ -40,7 +40,6 @@ async def start(update: Update, context: CallbackContext):
         "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
         reply_markup=markup
     )
-    await asyncio.create_task(schedule_message_deletion(update.message, msg))
 
 # Callback query handler for inline buttons
 async def button_callback(update: Update, context: CallbackContext):
@@ -64,18 +63,15 @@ async def help_command(message: Update, context: CallbackContext):
         "Click 'Weather' to get the current weather and time by entering your zip code."
     )
     msg = await message.reply_text(help_text)
-    await asyncio.create_task(schedule_message_deletion(message, msg))
 
 # Quote command
 async def quote(message: Update, context: CallbackContext):
     random_quote = random.choice(QUOTES)
     msg = await message.reply_text(random_quote)
-    await asyncio.create_task(schedule_message_deletion(message, msg))
 
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(message: Update, context: CallbackContext):
     msg = await message.reply_text("Please enter your zip code to get the current weather:")
-    await asyncio.create_task(schedule_message_deletion(message, msg))
     context.user_data['weather_prompt'] = msg  # Store the prompt message for later deletion
     return GET_ZIP_CODE
 
@@ -117,8 +113,7 @@ async def get_weather_time(update: Update, context: CallbackContext):
         logger.error(f"Error getting weather: {e}")
         weather_msg = await update.message.reply_text("Sorry, an error occurred while getting the weather.")
 
-    # Delete the original prompt and the weather response
-    await asyncio.create_task(schedule_message_deletion(context.user_data.get('weather_prompt'), weather_msg))
+    await asyncio.create_task(schedule_message_deletion(update.message, weather_msg))
     return ConversationHandler.END
 
 # Schedule message deletion for both user and bot messages
@@ -130,7 +125,7 @@ async def schedule_message_deletion(user_message, bot_message):
     except Exception as e:
         logger.warning(f"Failed to delete message: {e}")
 
-# Handle regular commands and remove the unnecessary "Received" messages
+# Handle regular commands
 async def handle_regular_message(update: Update, context: CallbackContext):
     logger.info(f"Received a regular message: {update.message.text}")
     text = update.message.text.strip()
@@ -163,7 +158,7 @@ def main():
     )
     application.add_handler(conv_handler)
 
-    # Register handler for regular commands (without 'Received' messages)
+    # Register handler for regular commands
     application.add_handler(MessageHandler(filters.COMMAND, handle_regular_message))
 
     # Start the bot
