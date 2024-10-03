@@ -76,6 +76,7 @@ async def quote(message: Update, context: CallbackContext):
 async def request_zip_code(message: Update, context: CallbackContext):
     msg = await message.reply_text("Please enter your zip code to get the current weather:")
     await asyncio.create_task(schedule_message_deletion(message, msg))
+    context.user_data['weather_prompt'] = msg  # Store the prompt message for later deletion
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -116,7 +117,8 @@ async def get_weather_time(update: Update, context: CallbackContext):
         logger.error(f"Error getting weather: {e}")
         weather_msg = await update.message.reply_text("Sorry, an error occurred while getting the weather.")
 
-    await asyncio.create_task(schedule_message_deletion(update.message, weather_msg))
+    # Delete the original prompt and the weather response
+    await asyncio.create_task(schedule_message_deletion(context.user_data.get('weather_prompt'), weather_msg))
     return ConversationHandler.END
 
 # Schedule message deletion for both user and bot messages
