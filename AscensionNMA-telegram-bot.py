@@ -101,6 +101,15 @@ async def get_weather_time(update, context):
     
     return ConversationHandler.END  # End the conversation
 
+# Handle channel posts
+async def handle_channel_post(update, context):
+    post_text = update.channel_post.text
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Channel post received: {post_text}")
+
+# Handle regular messages in direct chat
+async def handle_direct_message(update, context):
+    await update.message.reply_text("You are chatting directly with the bot.")
+
 def main():
     # Create the application with the bot token
     application = Application.builder().token('7823996299:AAHOsTyetmM50ZggjK2h_NWUR-Vm0gtolvY').build()
@@ -126,6 +135,14 @@ def main():
         fallbacks=[]
     )
     application.add_handler(conv_handler)
+
+    # Register a handler for channel posts
+    channel_handler = MessageHandler(filters.CHANNEL_POST, handle_channel_post)
+    application.add_handler(channel_handler)
+
+    # Register a handler for direct messages
+    direct_message_handler = MessageHandler(filters.TEXT & ~filters.COMMAND, handle_direct_message)
+    application.add_handler(direct_message_handler)
 
     # Start the bot and run it until you press Ctrl+C
     application.run_polling()
