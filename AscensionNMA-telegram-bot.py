@@ -36,11 +36,12 @@ async def start(update: Update, context: CallbackContext):
         "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
         reply_markup=markup
     )
-    # Schedule deletion of command messages only
     asyncio.create_task(schedule_message_deletion(update, msg))
 
 # Help command
 async def help_command(update: Update, context: CallbackContext):
+    reply_keyboard = [['/help', '/quote', 'Weather']]
+    markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
     help_text = (
         "Available commands:\n"
         "/start - Start the bot\n"
@@ -48,21 +49,22 @@ async def help_command(update: Update, context: CallbackContext):
         "/quote - Get a random quote\n"
         "Click 'Weather' to get the current weather and time by entering your zip code."
     )
-    msg = await update.message.reply_text(help_text)
-    # Schedule deletion of command messages only
+    msg = await update.message.reply_text(help_text, reply_markup=markup)
     asyncio.create_task(schedule_message_deletion(update, msg))
 
 # Quote command
 async def quote(update: Update, context: CallbackContext):
+    reply_keyboard = [['/help', '/quote', 'Weather']]
+    markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
     random_quote = random.choice(QUOTES)
-    msg = await update.message.reply_text(random_quote)
-    # Schedule deletion of command messages only
+    msg = await update.message.reply_text(random_quote, reply_markup=markup)
     asyncio.create_task(schedule_message_deletion(update, msg))
 
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(update: Update, context: CallbackContext):
-    msg = await update.message.reply_text("Please enter your zip code to get the current weather:")
-    # Schedule deletion of the "Weather" message and the prompt for zip code
+    reply_keyboard = [['/help', '/quote', 'Weather']]
+    markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
+    msg = await update.message.reply_text("Please enter your zip code to get the current weather:", reply_markup=markup)
     asyncio.create_task(schedule_message_deletion(update, msg))
     return GET_ZIP_CODE
 
@@ -76,6 +78,9 @@ async def get_weather_time(update: Update, context: CallbackContext):
 
     # Schedule deletion of the user's zip code input
     asyncio.create_task(schedule_message_deletion(update, None))  # Deleting user's zip code input
+
+    reply_keyboard = [['/help', '/quote', 'Weather']]
+    markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
 
     if weather_response.status_code == 200:
         weather_data = weather_response.json()
@@ -95,12 +100,13 @@ async def get_weather_time(update: Update, context: CallbackContext):
                 f"Weather in {city_name}, {country} (Lat: {lat}, Lon: {lon}):\n"
                 f"Temperature: {temperature}°F\n"
                 f"Description: {weather_description}\n\n"
-                f"Current Time: {current_time}"
+                f"Current Time: {current_time}",
+                reply_markup=markup
             )
         else:
-            msg = await update.message.reply_text("Sorry, I couldn't get the time for your location.")
+            msg = await update.message.reply_text("Sorry, I couldn't get the time for your location.", reply_markup=markup)
     else:
-        msg = await update.message.reply_text("Invalid zip code. Please try again.")
+        msg = await update.message.reply_text("Invalid zip code. Please try again.", reply_markup=markup)
 
     # Schedule deletion of the weather response and user's zip code
     asyncio.create_task(schedule_message_deletion(update, msg))
@@ -110,7 +116,7 @@ async def get_weather_time(update: Update, context: CallbackContext):
 # Schedule message deletion for both user and bot messages
 async def schedule_message_deletion(update: Update, bot_message):
     user_message = update.message
-    await asyncio.sleep(10)  # Wait for 10 seconds before deleting
+    await asyncio.sleep(60)  # Wait for 60 seconds before deleting
     try:
         if user_message:
             await user_message.delete()  # Delete the user's message
@@ -123,7 +129,9 @@ async def schedule_message_deletion(update: Update, bot_message):
 async def handle_regular_message(update: Update, context: CallbackContext):
     logger.info(f"Received a regular message: {update.message.text}")
     text = update.message.text.strip()
-    msg = await update.message.reply_text(f"Received: {text}")
+    reply_keyboard = [['/help', '/quote', 'Weather']]
+    markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
+    msg = await update.message.reply_text(f"Received: {text}", reply_markup=markup)
 
 def main():
     application = Application.builder().token('7823996299:AAHOsTyetmM50ZggjK2h_NWUR-Vm0gtolvY').build()
