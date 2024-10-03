@@ -69,12 +69,8 @@ async def help_command(update: Update, context: CallbackContext):
         "/quote - Get a random quote\n"
         "Click 'Weather' to get the current weather and time by entering your zip code."
     )
-    if update.callback_query:
-        msg = await update.callback_query.message.reply_text(help_text, reply_markup=reply_markup)
-        asyncio.create_task(schedule_message_deletion(update.callback_query.message, msg))
-    else:
-        msg = await update.message.reply_text(help_text, reply_markup=reply_markup)
-        asyncio.create_task(schedule_message_deletion(update.message, msg))
+    msg = await update.callback_query.message.reply_text(help_text, reply_markup=reply_markup)
+    asyncio.create_task(schedule_message_deletion(update.callback_query.message, msg))
 
 # Quote command with inline keyboard
 async def quote(update: Update, context: CallbackContext):
@@ -87,12 +83,12 @@ async def quote(update: Update, context: CallbackContext):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     random_quote = random.choice(QUOTES)
-    if update.callback_query:
-        msg = await update.callback_query.message.reply_text(random_quote, reply_markup=reply_markup)
-        asyncio.create_task(schedule_message_deletion(update.callback_query.message, msg))
-    else:
-        msg = await update.message.reply_text(random_quote, reply_markup=reply_markup)
-        asyncio.create_task(schedule_message_deletion(update.message, msg))
+    
+    # Send the quote
+    msg = await update.callback_query.message.reply_text(random_quote, reply_markup=reply_markup)
+    
+    # Schedule deletion for both the old message (with the buttons) and the new quote message
+    asyncio.create_task(schedule_message_deletion(update.callback_query.message, msg))
 
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(update: Update, context: CallbackContext):
@@ -158,15 +154,14 @@ async def get_weather_time(update: Update, context: CallbackContext):
     return ConversationHandler.END
 
 # Schedule message deletion for both user and bot messages
-async def schedule_message_deletion(user_message, bot_message):
+async def schedule_message_deletion(*messages):
     await asyncio.sleep(10)  # Wait for 10 seconds before deleting
-    try:
-        if user_message:
-            await user_message.delete()  # Delete the user's message
-        if bot_message:
-            await bot_message.delete()  # Delete the bot's response
-    except Exception as e:
-        logger.warning(f"Failed to delete message: {e}")
+    for msg in messages:
+        try:
+            if msg:
+                await msg.delete()
+        except Exception as e:
+            logger.warning(f"Failed to delete message: {e}")
 
 # Handle button presses
 async def button(update: Update, context: CallbackContext):
