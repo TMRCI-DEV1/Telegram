@@ -45,6 +45,7 @@ async def start(update: Update, context: CallbackContext):
 # Callback for inline buttons
 async def button_callback(update: Update, context: CallbackContext):
     query = update.callback_query
+    logger.info(f"Button pressed with callback data: {query.data}")  # Log button press for debugging
     await query.answer()
 
     if query.data == 'help':
@@ -78,6 +79,7 @@ async def quote(update: Update, context: CallbackContext):
 
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(update: Update, context: CallbackContext):
+    logger.info("Weather button clicked. Asking for zip code.")  # Log weather button press
     msg = await update.callback_query.message.reply_text("Please enter your zip code to get the current weather:")
     asyncio.create_task(schedule_message_deletion(update.callback_query.message, msg))
     return GET_ZIP_CODE
