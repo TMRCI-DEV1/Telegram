@@ -1,7 +1,7 @@
 import requests
 import random
 from telegram import ReplyKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler
 
 # Define API keys and base URLs
 WEATHER_API_KEY = "a10a17233a99d6e36c3d99f9493fddf5"
@@ -15,6 +15,9 @@ QUOTES = [
     "The best way to predict the future is to invent it. - Alan Kay",
     "If ifs and buts were candies and nuts, we'd all have a Merry Fucking Christmas! - Anonymous (aka Jimmy Crypto)"
 ]
+
+# Define states for the conversation handler
+GET_ZIP_CODE = range(1)
 
 # Start command with persistent reply keyboard
 async def start(update, context):
@@ -36,7 +39,7 @@ async def help_command(update, context):
         "/start - Start the bot\n"
         "/help - Get help\n"
         "/quote - Get a random quote\n"
-        "Send your zip code to get the current weather and time."
+        "Click 'Weather' to get the current weather and time by entering your zip code."
     )
     await update.message.reply_text(help_text)
 
@@ -45,7 +48,12 @@ async def quote(update, context):
     random_quote = random.choice(QUOTES)
     await update.message.reply_text(random_quote)
 
-# Weather and time functionality
+# Handle the weather button click and prompt for zip code
+async def request_zip_code(update, context):
+    await update.message.reply_text("Please enter your zip code to get the current weather:")
+    return GET_ZIP_CODE  # This will wait for the user to enter the zip code
+
+# Process the zip code and get the weather
 async def get_weather_time(update, context):
     zip_code = update.message.text.strip()
     
@@ -90,6 +98,8 @@ async def get_weather_time(update, context):
             await update.message.reply_text("Sorry, I couldn't get the time for your location.")
     else:
         await update.message.reply_text("Invalid zip code. Please try again.")
+    
+    return ConversationHandler.END  # End the conversation
 
 def main():
     # Create the application with the bot token
@@ -107,9 +117,15 @@ def main():
     quote_handler = CommandHandler('quote', quote)
     application.add_handler(quote_handler)
 
-    # Register the weather and time handler
-    weather_handler = MessageHandler(filters.TEXT & ~filters.COMMAND, get_weather_time)
-    application.add_handler(weather_handler)
+    # Conversation handler for weather request
+    conv_handler = ConversationHandler(
+        entry_points=[MessageHandler(filters.Regex('^(Weather)$'), request_zip_code)],
+        states={
+            GET_ZIP_CODE: [MessageHandler(filters.TEXT, get_weather_time)],
+        },
+        fallbacks=[]
+    )
+    application.add_handler(conv_handler)
 
     # Start the bot and run it until you press Ctrl+C
     application.run_polling()
