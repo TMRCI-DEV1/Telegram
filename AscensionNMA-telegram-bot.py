@@ -79,7 +79,7 @@ async def request_zip_code(update: Update, context: CallbackContext):
     query = update.callback_query
     msg = await query.message.reply_text("Please enter your zip code to get the current weather:")
     
-    # Delete the button query message (initial button press)
+    # Delete the initial button query message
     asyncio.create_task(schedule_message_deletion(query.message, msg))
     
     return GET_ZIP_CODE
