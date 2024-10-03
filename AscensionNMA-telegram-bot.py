@@ -63,16 +63,17 @@ async def help_command(message: Update, context: CallbackContext):
         "Click 'Weather' to get the current weather and time by entering your zip code."
     )
     msg = await message.reply_text(help_text)
+    await schedule_message_deletion(message, msg)
 
 # Quote command
 async def quote(message: Update, context: CallbackContext):
     random_quote = random.choice(QUOTES)
     msg = await message.reply_text(random_quote)
+    await schedule_message_deletion(message, msg)
 
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(message: Update, context: CallbackContext):
     msg = await message.reply_text("Please enter your zip code to get the current weather:")
-    context.user_data['weather_prompt'] = msg  # Store the prompt message for later deletion
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -113,7 +114,7 @@ async def get_weather_time(update: Update, context: CallbackContext):
         logger.error(f"Error getting weather: {e}")
         weather_msg = await update.message.reply_text("Sorry, an error occurred while getting the weather.")
 
-    await asyncio.create_task(schedule_message_deletion(update.message, weather_msg))
+    await schedule_message_deletion(update.message, weather_msg)
     return ConversationHandler.END
 
 # Schedule message deletion for both user and bot messages
@@ -127,7 +128,6 @@ async def schedule_message_deletion(user_message, bot_message):
 
 # Handle regular commands
 async def handle_regular_message(update: Update, context: CallbackContext):
-    logger.info(f"Received a regular message: {update.message.text}")
     text = update.message.text.strip()
     if text.startswith("/"):
         command = text[1:]
@@ -139,7 +139,7 @@ async def handle_regular_message(update: Update, context: CallbackContext):
             await start(update.message, context)
         else:
             msg = await update.message.reply_text(f"Unknown command: {command}")
-            await asyncio.create_task(schedule_message_deletion(update.message, msg))
+            await schedule_message_deletion(update.message, msg)
 
 def main():
     application = Application.builder().token('7823996299:AAHOsTyetmM50ZggjK2h_NWUR-Vm0gtolvY').build()
