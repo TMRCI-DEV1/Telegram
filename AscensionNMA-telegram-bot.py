@@ -104,7 +104,11 @@ async def get_weather_time(update, context):
 # Handle channel posts
 async def handle_channel_post(update, context):
     post_text = update.channel_post.text
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Channel post received: {post_text}")
+    # Only respond to non-command messages
+    if post_text.startswith("/"):
+        return  # Ignore commands in the channel
+    else:
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Channel post received: {post_text}")
 
 # Handle regular messages in direct chat
 async def handle_direct_message(update, context):
@@ -136,7 +140,7 @@ def main():
     )
     application.add_handler(conv_handler)
 
-    # Register a handler for channel posts using UpdateType.CHANNEL_POST
+    # Register a handler for non-command channel posts
     channel_handler = MessageHandler(filters.UpdateType.CHANNEL_POST, handle_channel_post)
     application.add_handler(channel_handler)
 
