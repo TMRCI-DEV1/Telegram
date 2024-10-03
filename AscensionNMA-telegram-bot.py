@@ -118,11 +118,17 @@ async def handle_channel_post(update: Update, context: CallbackContext):
     # Check if the post is a command (starts with "/") and handle it manually
     if post_text.startswith("/"):
         if post_text == "/start":
+            # Simulate start command
             await start(update, context)
         elif post_text == "/help":
+            # Simulate help command
             await help_command(update, context)
         elif post_text == "/quote":
+            # Simulate quote command
             await quote(update, context)
+        else:
+            # If an unknown command, respond accordingly
+            await context.bot.send_message(chat_id=update.effective_chat.id, text="Unknown command.")
     else:
         # Respond to non-command messages
         await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Channel post received: {post_text}")
