@@ -2,7 +2,7 @@ import logging
 import requests
 import random
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler, CallbackContext
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler, CallbackQueryHandler, CallbackContext
 import asyncio
 
 # Define API keys and base URLs
@@ -49,14 +49,14 @@ async def button_callback(update: Update, context: CallbackContext):
     await query.answer()  # Acknowledge the button press
 
     if query.data == 'help':
-        await help_command(update, context)
+        await help_command(query.message, context)
     elif query.data == 'quote':
-        await quote(update, context)
+        await quote(query.message, context)
     elif query.data == 'weather':
-        await request_zip_code(update, context)
+        await request_zip_code(query.message, context)
 
 # Help command
-async def help_command(update: Update, context: CallbackContext):
+async def help_command(message: Update, context: CallbackContext):
     help_text = (
         "Available commands:\n"
         "/start - Start the bot\n"
@@ -64,18 +64,18 @@ async def help_command(update: Update, context: CallbackContext):
         "/quote - Get a random quote\n"
         "Click 'Weather' to get the current weather and time by entering your zip code."
     )
-    msg = await update.message.reply_text(help_text)
-    asyncio.create_task(schedule_message_deletion(update, msg))
+    msg = await message.reply_text(help_text)
+    asyncio.create_task(schedule_message_deletion(message, msg))
 
 # Quote command
-async def quote(update: Update, context: CallbackContext):
+async def quote(message: Update, context: CallbackContext):
     random_quote = random.choice(QUOTES)
-    msg = await update.message.reply_text(random_quote)
-    asyncio.create_task(schedule_message_deletion(update, msg))
+    msg = await message.reply_text(random_quote)
+    asyncio.create_task(schedule_message_deletion(message, msg))
 
 # Handle the weather button click and prompt for zip code
-async def request_zip_code(update: Update, context: CallbackContext):
-    msg = await update.message.reply_text("Please enter your zip code to get the current weather:")
+async def request_zip_code(message: Update, context: CallbackContext):
+    msg = await message.reply_text("Please enter your zip code to get the current weather:")
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -143,9 +143,18 @@ def main():
     application.add_handler(CommandHandler('start', start))
 
     # Register button callbacks
+    application.add_handler(CallbackQueryHandler(button_callback))
+
+    # Conversation handler for weather request
+    conv_handler = ConversationHandler(
+        entry_points=[MessageHandler(filters.Regex('^(Weather)$'), request_zip_code)],
+        states={GET_ZIP_CODE: [MessageHandler(filters.TEXT, get_weather_time)]},
+        fallbacks=[]
+    )
+    application.add_handler(conv_handler)
+
+    # Register handler for regular messages
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_regular_message))
-    application.add_handler(MessageHandler(filters.Regex('^(Weather)$'), request_zip_code))
-    application.add_handler(MessageHandler(filters.Regex('^(quote|help)$'), button_callback))
 
     # Start the bot
     application.run_polling()
