@@ -85,6 +85,8 @@ async def request_zip_code(update: Update, context: CallbackContext):
     logger.info("Weather button clicked. Asking for zip code.")  # Log weather button press
     msg = await update.callback_query.message.reply_text("Please enter your zip code to get the current weather:")
     asyncio.create_task(schedule_message_deletion(update.callback_query.message, msg))
+    
+    # Return GET_ZIP_CODE to properly transition the state
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -124,7 +126,7 @@ async def get_weather_time(update: Update, context: CallbackContext):
     # Schedule deletion of both the user input and the bot's response
     asyncio.create_task(schedule_message_deletion(update.message, msg))
 
-    return ConversationHandler.END
+    return ConversationHandler.END  # End the conversation
 
 # Schedule message deletion for both user and bot messages
 async def schedule_message_deletion(user_message, bot_message):
