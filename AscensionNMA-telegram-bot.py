@@ -1,5 +1,6 @@
-import random
 import requests
+import random
+from telegram import ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
 # Define API keys and base URLs
@@ -12,11 +13,21 @@ QUOTES = [
     "Do not wait to strike till the iron is hot; but make it hot by striking. - William Butler Yeats",
     "Whether you think you can, or you think you can't--you're right. - Henry Ford",
     "The best way to predict the future is to invent it. - Alan Kay"
+    "If ifs and buts were candies and nuts, we'd all have a Merry Fucking Christmas! - Anonymous (aka Jimmy Crypto)"
 ]
 
-# Start command
+# Start command with reply keyboard
 async def start(update, context):
-    await update.message.reply_text("Greetings peasant! I'm your new bot overlord. Send your zip code to get the current time and weather.")
+    # Define the buttons for the keyboard
+    reply_keyboard = [['/help', '/quote', 'Weather']]
+    
+    # Set up the keyboard markup
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True)
+    
+    await update.message.reply_text(
+        "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
+        reply_markup=markup
+    )
 
 # Help command
 async def help_command(update, context):
@@ -31,7 +42,6 @@ async def help_command(update, context):
 
 # Quote command
 async def quote(update, context):
-    # Send a random quote from the list
     random_quote = random.choice(QUOTES)
     await update.message.reply_text(random_quote)
 
