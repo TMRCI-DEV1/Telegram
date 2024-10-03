@@ -74,6 +74,7 @@ async def quote(message: Update, context: CallbackContext):
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(message: Update, context: CallbackContext):
     msg = await message.reply_text("Please enter your zip code to get the current weather:")
+    context.user_data['request_zip_msg'] = msg
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -115,6 +116,9 @@ async def get_weather_time(update: Update, context: CallbackContext):
         weather_msg = await update.message.reply_text("Sorry, an error occurred while getting the weather.")
 
     await schedule_message_deletion(update.message, weather_msg)
+    # Delete the initial "Please enter your zip code" message
+    if 'request_zip_msg' in context.user_data:
+        await context.user_data['request_zip_msg'].delete()
     return ConversationHandler.END
 
 # Schedule message deletion for both user and bot messages
@@ -142,7 +146,7 @@ async def handle_regular_message(update: Update, context: CallbackContext):
             await schedule_message_deletion(update.message, msg)
 
 def main():
-    application = Application.builder().token('7823996299:AAHOsTyetmM50ZggjK2h_NWUR-Vm0gtolvY').build()
+    application = Application.builder().token('YOUR_BOT_TOKEN_HERE').build()
 
     # Register the start command handler
     application.add_handler(CommandHandler('start', start))
