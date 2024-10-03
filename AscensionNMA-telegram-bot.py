@@ -129,6 +129,21 @@ async def schedule_message_deletion(user_message, bot_message):
     except Exception as e:
         logger.warning(f"Failed to delete message: {e}")
 
+# Handle regular messages, ignoring non-command posts
+async def handle_regular_message(update: Update, context: CallbackContext):
+    text = update.message.text.strip()
+    if not text.startswith("/"):  # Ignore non-command posts
+        return
+
+    logger.info(f"Received a command: {update.message.text}")
+
+    if text.startswith("/start"):
+        await start(update, context)
+    elif text.startswith("/help"):
+        await help_command(update, context)
+    elif text.startswith("/quote"):
+        await quote(update, context)
+
 # Main function to set up the bot
 def main():
     application = Application.builder().token('7823996299:AAHOsTyetmM50ZggjK2h_NWUR-Vm0gtolvY').build()
@@ -147,7 +162,7 @@ def main():
     )
     application.add_handler(conv_handler)
 
-    # Register handler for regular messages, ignoring non-command posts
+    # Register handler for regular messages
     application.add_handler(MessageHandler(filters.TEXT, handle_regular_message))
 
     # Start the bot
