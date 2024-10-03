@@ -53,7 +53,7 @@ async def start(update: Update, context: CallbackContext):
         reply_markup=markup
     )
     # Schedule deletion of the start command and bot response
-    asyncio.create_task(schedule_message_deletion(msg))
+    asyncio.create_task(schedule_message_deletion(update.message, msg)) 
     logger.info("Start command processed.")
 
 # Callback for inline buttons not handled by ConversationHandler
@@ -85,8 +85,8 @@ async def help_command(query: Update, context: CallbackContext):
     keyboard = [[InlineKeyboardButton("Back", callback_data='start')]]
     markup = InlineKeyboardMarkup(keyboard)
     msg = await query.message.reply_text(help_text, reply_markup=markup)
-    # Schedule deletion of the help message
-    asyncio.create_task(schedule_message_deletion(msg))
+    # Schedule deletion of the help message and bot response
+    asyncio.create_task(schedule_message_deletion(query.message, msg))
     logger.info("Help command response sent.")
 
 # Quote command
@@ -96,8 +96,8 @@ async def quote_command(query: Update, context: CallbackContext):
     keyboard = [[InlineKeyboardButton("Back", callback_data='start')]]
     markup = InlineKeyboardMarkup(keyboard)
     msg = await query.message.reply_text(random_quote, reply_markup=markup)
-    # Schedule deletion of the quote message
-    asyncio.create_task(schedule_message_deletion(msg))
+    # Schedule deletion of the quote message and bot response
+    asyncio.create_task(schedule_message_deletion(query.message, msg))
     logger.info("Quote command response sent.")
 
 # Start callback (from 'Back' button)
@@ -118,7 +118,7 @@ async def start_callback(query: Update, context: CallbackContext):
         reply_markup=markup
     )
     # Schedule deletion of the 'Back' button message and the new start message
-    asyncio.create_task(schedule_message_deletion(msg))
+    asyncio.create_task(schedule_message_deletion(query.message, msg)) 
     logger.info("Back to start command processed.")
 
 # Handle the weather button click and prompt for zip code
@@ -127,8 +127,8 @@ async def request_zip_code(query: Update, context: CallbackContext):
     msg = await query.message.reply_text("Please enter your zip code to get the current weather:")
     # Store the prompt message in user_data for deletion later (if desired)
     context.user_data['zip_code_prompt'] = msg
-    # Schedule deletion of the prompt message
-    asyncio.create_task(schedule_message_deletion(msg))
+    # Schedule deletion of the prompt message and bot response
+    asyncio.create_task(schedule_message_deletion(query.message, msg)) 
     return GET_ZIP_CODE  # Transition to GET_ZIP_CODE state
 
 # Process the zip code and get the weather
@@ -136,11 +136,11 @@ async def get_weather_time(update: Update, context: CallbackContext):
     zip_code = update.message.text.strip()
     logger.info(f"Processing zip code: {zip_code}")
     full_zip_code = f"{zip_code},US"
-    
+
     try:
         weather_params = {'zip': full_zip_code, 'appid': WEATHER_API_KEY, 'units': 'imperial'}
         weather_response = requests.get(WEATHER_API_URL, params=weather_params)
-        
+
         if weather_response.status_code == 200:
             weather_data = weather_response.json()
             city_name = weather_data.get('name')
@@ -149,7 +149,7 @@ async def get_weather_time(update: Update, context: CallbackContext):
             lon = weather_data['coord'].get('lon')
             temperature = weather_data['main'].get('temp')
             weather_description = weather_data['weather'][0].get('description')
-            
+
             weather_text = (
                 f"Weather in {city_name}, {country} (Lat: {lat}, Lon: {lon}):\n"
                 f"Temperature: {temperature}°F\n"
@@ -161,10 +161,10 @@ async def get_weather_time(update: Update, context: CallbackContext):
     except Exception as e:
         logger.error(f"Error fetching weather: {e}")
         msg = await update.message.reply_text("An error occurred while fetching the weather. Please try again.")
-    
-    # Schedule deletion of the bot's response
-    asyncio.create_task(schedule_message_deletion(msg))
-    
+
+    # Schedule deletion of the user's zip code input and bot's response
+    asyncio.create_task(schedule_message_deletion(update.message, msg)) 
+
     return ConversationHandler.END  # End the conversation
 
 # Schedule message deletion for multiple messages
@@ -173,19 +173,18 @@ async def schedule_message_deletion(*messages):
     for msg in messages:
         try:
             if msg:
-                await msg.delete()
-                logger.info(f"Deleted message ID: {msg.message_id}")
+                await msg.delete()  # Delete each message
         except Exception as e:
             logger.warning(f"Failed to delete message: {e}")
 
 # Error handler to catch and log exceptions
 async def error_handler(update: object, context: CallbackContext):
-    logger.error(msg="Exception while handling an update:", exc_info=context.error)
+    logger.error(msg="Exception while handling an update:", exc_info=context.error)    
 
 # Main function to set up the bot
 def main():
     application = Application.builder().token('7823996299:AAHOsTyetmM50ZggjK2h_NWUR-Vm0gtolvY').build()
-    
+
     # Register ConversationHandler for weather request
     conv_handler = ConversationHandler(
         entry_points=[CallbackQueryHandler(request_zip_code, pattern='^weather$')],
@@ -195,16 +194,16 @@ def main():
         fallbacks=[]
     )
     application.add_handler(conv_handler)
-    
+
     # Register the start command handler
     application.add_handler(CommandHandler('start', start))
-    
+
     # Callback handler for other inline buttons (help, quote, back to start)
     application.add_handler(CallbackQueryHandler(button_callback, pattern='^(help|quote|start)$'))
-    
+
     # Register the error handler
     application.add_error_handler(error_handler)
-    
+
     # Start the bot
     application.run_polling()
 
