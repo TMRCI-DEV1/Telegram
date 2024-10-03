@@ -111,7 +111,6 @@ async def get_weather_time(update: Update, context: CallbackContext):
                     f"Current Time: {current_time}"
                 )
                 logger.info(f"Weather fetched for {zip_code}")
-
             else:
                 weather_msg = await update.message.reply_text("Sorry, I couldn't get the time for your location.")
         else:
