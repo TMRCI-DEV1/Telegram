@@ -40,24 +40,25 @@ async def start(update: Update, context: CallbackContext):
         "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
         reply_markup=markup
     )
+    # Schedule deletion of the start command and bot response
     asyncio.create_task(schedule_message_deletion(update.message, msg))
 
 # Callback for inline buttons
 async def button_callback(update: Update, context: CallbackContext):
     query = update.callback_query
     logger.info(f"Button pressed with callback data: {query.data}")  # Log button press for debugging
-    await query.answer()  # Make sure to answer the callback to stop Telegram from showing "loading..."
+    await query.answer()  # Answer the callback to stop Telegram from showing "loading..."
 
     # Handle callback based on the button pressed
     if query.data == 'help':
-        await help_command(update, context)
+        await help_command(query, context)
     elif query.data == 'quote':
-        await quote(update, context)
+        await quote(query, context)
     elif query.data == 'weather':
-        await request_zip_code(update, context)
+        await request_zip_code(query, context)
 
 # Help command
-async def help_command(update: Update, context: CallbackContext):
+async def help_command(query: Update, context: CallbackContext):
     logger.info("Help command triggered")
     help_text = (
         "Available commands:\n"
@@ -68,25 +69,25 @@ async def help_command(update: Update, context: CallbackContext):
     )
     keyboard = [[InlineKeyboardButton("Back", callback_data='start')]]
     markup = InlineKeyboardMarkup(keyboard)
-    msg = await update.callback_query.message.reply_text(help_text, reply_markup=markup)
-    asyncio.create_task(schedule_message_deletion(update.callback_query.message, msg))
+    msg = await query.message.reply_text(help_text, reply_markup=markup)
+    asyncio.create_task(schedule_message_deletion(query.message, msg))
 
 # Quote command
-async def quote(update: Update, context: CallbackContext):
+async def quote(query: Update, context: CallbackContext):
     logger.info("Quote command triggered")
     random_quote = random.choice(QUOTES)
     keyboard = [[InlineKeyboardButton("Back", callback_data='start')]]
     markup = InlineKeyboardMarkup(keyboard)
-    msg = await update.callback_query.message.reply_text(random_quote, reply_markup=markup)
-    asyncio.create_task(schedule_message_deletion(update.callback_query.message, msg))
+    msg = await query.message.reply_text(random_quote, reply_markup=markup)
+    asyncio.create_task(schedule_message_deletion(query.message, msg))
 
 # Handle the weather button click and prompt for zip code
-async def request_zip_code(update: Update, context: CallbackContext):
+async def request_zip_code(query: Update, context: CallbackContext):
     logger.info("Weather button clicked. Asking for zip code.")  # Log weather button press
-    msg = await update.callback_query.message.reply_text("Please enter your zip code to get the current weather:")
-    asyncio.create_task(schedule_message_deletion(update.callback_query.message, msg))
+    msg = await query.message.reply_text("Please enter your zip code to get the current weather:")
+    asyncio.create_task(schedule_message_deletion(query.message, msg))
     
-    # Return GET_ZIP_CODE to properly transition the state
+    # Return GET_ZIP_CODE to transition to zip code entry state
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -107,19 +108,11 @@ async def get_weather_time(update: Update, context: CallbackContext):
         temperature = weather_data['main'].get('temp')
         weather_description = weather_data['weather'][0].get('description')
 
-        time_response = requests.get(f"http://worldtimeapi.org/api/timezone/Etc/GMT")
-        if time_response.status_code == 200:
-            time_data = time_response.json()
-            current_time = time_data['datetime']
-
-            msg = await update.message.reply_text(
-                f"Weather in {city_name}, {country} (Lat: {lat}, Lon: {lon}):\n"
-                f"Temperature: {temperature}°F\n"
-                f"Description: {weather_description}\n\n"
-                f"Current Time: {current_time}"
-            )
-        else:
-            msg = await update.message.reply_text("Sorry, I couldn't get the time for your location.")
+        msg = await update.message.reply_text(
+            f"Weather in {city_name}, {country} (Lat: {lat}, Lon: {lon}):\n"
+            f"Temperature: {temperature}°F\n"
+            f"Description: {weather_description}"
+        )
     else:
         msg = await update.message.reply_text("Invalid zip code. Please try again.")
 
