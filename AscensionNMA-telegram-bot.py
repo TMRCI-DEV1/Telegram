@@ -2,9 +2,15 @@ import logging
 import requests
 import random
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
-from telegram.ext import Application, CommandHandler,   
- MessageHandler, filters, ConversationHandler, CallbackContext, CallbackQueryHandler   
-
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    MessageHandler,
+    filters,
+    ConversationHandler,
+    CallbackContext,
+    CallbackQueryHandler,
+)
 import asyncio
 
 # Define API keys and base URLs
@@ -21,8 +27,7 @@ logger = logging.getLogger(__name__)
 # List of quotes
 QUOTES = [
     "The only limit to our realization of tomorrow is our doubts of today. - Franklin D. Roosevelt",
-    "Do not wait to strike till the iron is hot; but make it hot by striking. - William Butler Yeats",   
-
+    "Do not wait to strike till the iron is hot; but make it hot by striking. - William Butler Yeats",
     "Whether you think you can, or you think you can't--you're right. - Henry Ford",
     "The best way to predict the future is to invent it. - Alan Kay",
     "If ifs and buts were candies and nuts, we'd all have a Merry Fucking Christmas! - Anonymous (aka Jimmy Crypto)"
@@ -35,8 +40,8 @@ GET_ZIP_CODE = range(1)
 async def start(update: Update, context: CallbackContext):
     keyboard = [
         [
-            InlineKeyboardButton("/help", callback_data='help'),
-            InlineKeyboardButton("/quote", callback_data='quote'),
+            InlineKeyboardButton("Help", callback_data='help'),
+            InlineKeyboardButton("Quote", callback_data='quote'),
         ],
         [InlineKeyboardButton("Weather", callback_data='weather')],
     ]
@@ -51,8 +56,8 @@ async def start(update: Update, context: CallbackContext):
 async def help_command(update: Update, context: CallbackContext):
     keyboard = [
         [
-            InlineKeyboardButton("/help", callback_data='help'),
-            InlineKeyboardButton("/quote", callback_data='quote'),
+            InlineKeyboardButton("Help", callback_data='help'),
+            InlineKeyboardButton("Quote", callback_data='quote'),
         ],
         [InlineKeyboardButton("Weather", callback_data='weather')],
     ]
@@ -75,8 +80,8 @@ async def help_command(update: Update, context: CallbackContext):
 async def quote(update: Update, context: CallbackContext):
     keyboard = [
         [
-            InlineKeyboardButton("/help", callback_data='help'),
-            InlineKeyboardButton("/quote", callback_data='quote'),
+            InlineKeyboardButton("Help", callback_data='help'),
+            InlineKeyboardButton("Quote", callback_data='quote'),
         ],
         [InlineKeyboardButton("Weather", callback_data='weather')],
     ]
@@ -94,8 +99,8 @@ async def request_zip_code(update: Update, context: CallbackContext):
     query = update.callback_query
     keyboard = [
         [
-            InlineKeyboardButton("/help", callback_data='help'),
-            InlineKeyboardButton("/quote", callback_data='quote'),
+            InlineKeyboardButton("Help", callback_data='help'),
+            InlineKeyboardButton("Quote", callback_data='quote'),
         ],
         [InlineKeyboardButton("Weather", callback_data='weather')],
     ]
@@ -114,8 +119,8 @@ async def get_weather_time(update: Update, context: CallbackContext):
 
     keyboard = [
         [
-            InlineKeyboardButton("/help", callback_data='help'),
-            InlineKeyboardButton("/quote", callback_data='quote'),
+            InlineKeyboardButton("Help", callback_data='help'),
+            InlineKeyboardButton("Quote", callback_data='quote'),
         ],
         [InlineKeyboardButton("Weather", callback_data='weather')],
     ]
