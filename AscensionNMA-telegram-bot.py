@@ -16,13 +16,13 @@ QUOTES = [
     "If ifs and buts were candies and nuts, we'd all have a Merry Fucking Christmas! - Anonymous (aka Jimmy Crypto)"
 ]
 
-# Start command with reply keyboard
+# Start command with persistent reply keyboard
 async def start(update, context):
     # Define the buttons for the keyboard
     reply_keyboard = [['/help', '/quote', 'Weather']]
     
-    # Set up the keyboard markup
-    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True)
+    # Set up the keyboard markup without one_time_keyboard, so it remains visible
+    markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True)
     
     await update.message.reply_text(
         "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
