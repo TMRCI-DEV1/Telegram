@@ -121,13 +121,20 @@ async def schedule_message_deletion(user_message, bot_message):
     except Exception as e:
         logger.warning(f"Failed to delete message: {e}")
 
-# Handle regular messages in direct chat
+# Handle regular messages, ignoring non-command posts
 async def handle_regular_message(update: Update, context: CallbackContext):
-    logger.info(f"Received a regular message: {update.message.text}")
     text = update.message.text.strip()
-    reply_keyboard = [['/help', '/quote', 'Weather']]
-    markup = ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False)
-    msg = await update.message.reply_text(f"Received: {text}", reply_markup=markup)
+    if not text.startswith("/"):  # Ignore non-command posts
+        return
+
+    logger.info(f"Received a command: {update.message.text}")
+
+    if text.startswith("/start"):
+        await start(update, context)
+    elif text.startswith("/help"):
+        await help_command(update, context)
+    elif text.startswith("/quote"):
+        await quote(update, context)
 
 def main():
     application = Application.builder().token('7823996299:AAHOsTyetmM50ZggjK2h_NWUR-Vm0gtolvY').build()
@@ -149,7 +156,7 @@ def main():
     )
     application.add_handler(conv_handler)
 
-    # Register handler for regular messages in DMs
+    # Register handler for regular messages, ignoring non-command posts
     application.add_handler(MessageHandler(filters.TEXT, handle_regular_message))
 
     # Start the bot
