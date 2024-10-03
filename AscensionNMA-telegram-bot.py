@@ -30,9 +30,11 @@ GET_ZIP_CODE = range(1)
 
 # Start command with inline buttons
 async def start(update: Update, context: CallbackContext):
-    keyboard = [[InlineKeyboardButton("Help", callback_data='help'),
-                 InlineKeyboardButton("Quote", callback_data='quote'),
-                 InlineKeyboardButton("Weather", callback_data='weather')]]
+    keyboard = [
+        [InlineKeyboardButton("Help", callback_data='help'),
+         InlineKeyboardButton("Quote", callback_data='quote')],
+        [InlineKeyboardButton("Weather", callback_data='weather')]
+    ]
     markup = InlineKeyboardMarkup(keyboard)
     msg = await update.message.reply_text(
         "Greetings peasant! I'm your new bot overlord. Choose one of the options below:",
@@ -44,13 +46,12 @@ async def start(update: Update, context: CallbackContext):
 async def button_callback(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
-    
+
     if query.data == 'help':
         await help_command(query, context)
     elif query.data == 'quote':
         await quote(query, context)
     elif query.data == 'weather':
-        # Trigger zip code request for the weather
         await request_zip_code(query, context)
 
 # Help command
@@ -64,26 +65,21 @@ async def help_command(update: Update, context: CallbackContext):
     )
     keyboard = [[InlineKeyboardButton("Back", callback_data='start')]]
     markup = InlineKeyboardMarkup(keyboard)
-    msg = await update.message.reply_text(help_text, reply_markup=markup)
-    asyncio.create_task(schedule_message_deletion(update.message, msg))
+    msg = await update.callback_query.message.reply_text(help_text, reply_markup=markup)
+    asyncio.create_task(schedule_message_deletion(update.callback_query.message, msg))
 
 # Quote command
 async def quote(update: Update, context: CallbackContext):
     random_quote = random.choice(QUOTES)
     keyboard = [[InlineKeyboardButton("Back", callback_data='start')]]
     markup = InlineKeyboardMarkup(keyboard)
-    msg = await update.message.reply_text(random_quote, reply_markup=markup)
-    asyncio.create_task(schedule_message_deletion(update.message, msg))
+    msg = await update.callback_query.message.reply_text(random_quote, reply_markup=markup)
+    asyncio.create_task(schedule_message_deletion(update.callback_query.message, msg))
 
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(update: Update, context: CallbackContext):
-    query = update.callback_query
-    msg = await query.message.reply_text("Please enter your zip code to get the current weather:")
-    
-    # Delete the initial button query message
-    asyncio.create_task(schedule_message_deletion(query.message, msg))
-    
-    # Move to the next state (waiting for the user to input a zip code)
+    msg = await update.callback_query.message.reply_text("Please enter your zip code to get the current weather:")
+    asyncio.create_task(schedule_message_deletion(update.callback_query.message, msg))
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -103,15 +99,23 @@ async def get_weather_time(update: Update, context: CallbackContext):
         temperature = weather_data['main'].get('temp')
         weather_description = weather_data['weather'][0].get('description')
 
-        msg = await update.message.reply_text(
-            f"Weather in {city_name}, {country} (Lat: {lat}, Lon: {lon}):\n"
-            f"Temperature: {temperature}°F\n"
-            f"Description: {weather_description}"
-        )
+        time_response = requests.get(f"http://worldtimeapi.org/api/timezone/Etc/GMT")
+        if time_response.status_code == 200:
+            time_data = time_response.json()
+            current_time = time_data['datetime']
+
+            msg = await update.message.reply_text(
+                f"Weather in {city_name}, {country} (Lat: {lat}, Lon: {lon}):\n"
+                f"Temperature: {temperature}°F\n"
+                f"Description: {weather_description}\n\n"
+                f"Current Time: {current_time}"
+            )
+        else:
+            msg = await update.message.reply_text("Sorry, I couldn't get the time for your location.")
     else:
         msg = await update.message.reply_text("Invalid zip code. Please try again.")
 
-    # Delete user input (zip code) and bot's response
+    # Schedule deletion of both the user input and the bot's response
     asyncio.create_task(schedule_message_deletion(update.message, msg))
 
     return ConversationHandler.END
@@ -126,21 +130,6 @@ async def schedule_message_deletion(user_message, bot_message):
             await bot_message.delete()  # Delete the bot's response
     except Exception as e:
         logger.warning(f"Failed to delete message: {e}")
-
-# Handle regular messages, ignoring non-command posts
-async def handle_regular_message(update: Update, context: CallbackContext):
-    text = update.message.text.strip()
-    if not text.startswith("/"):  # Ignore non-command posts
-        return
-
-    logger.info(f"Received a command: {update.message.text}")
-
-    if text.startswith("/start"):
-        await start(update, context)
-    elif text.startswith("/help"):
-        await help_command(update, context)
-    elif text.startswith("/quote"):
-        await quote(update, context)
 
 # Main function to set up the bot
 def main():
@@ -159,9 +148,6 @@ def main():
         fallbacks=[]
     )
     application.add_handler(conv_handler)
-
-    # Register handler for regular messages
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_regular_message))
 
     # Start the bot
     application.run_polling()
