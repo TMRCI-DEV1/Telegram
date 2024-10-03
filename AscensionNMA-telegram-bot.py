@@ -69,8 +69,8 @@ async def get_weather_time(update: Update, context: CallbackContext):
         weather_data = weather_response.json()
         city_name = weather_data.get('name')
         country = weather_data['sys'].get('country')
-        lat = weather_data['coord'].get('lat')
-        lon = weather_data['coord'].get('lon')
+        lat = weather_data.get('coord').get('lat')
+        lon = weather_data.get('coord').get('lon')
         temperature = weather_data['main'].get('temp')
         weather_description = weather_data['weather'][0].get('description')
 
@@ -92,7 +92,7 @@ async def get_weather_time(update: Update, context: CallbackContext):
     
     return ConversationHandler.END
 
-# Handle channel posts and commands manually
+# Handle channel posts and commands manually, including zip codes
 async def handle_channel_post(update: Update, context: CallbackContext):
     logger.info(f"Received a post in the channel: {update.channel_post.text}")
     post_text = update.channel_post.text.strip()
@@ -116,10 +116,13 @@ async def handle_channel_post(update: Update, context: CallbackContext):
         else:
             await context.bot.send_message(chat_id=update.effective_chat.id, text="Unknown command.")
     else:
-        # If not a command, assume it might be a zip code for weather
+        # If it's a 5-digit number, assume it's a zip code and process weather request
         if post_text.isdigit() and len(post_text) == 5:
-            # Process the zip code as a weather request
-            await get_weather_time(update, context)
+            # Simulate message with zip code for weather
+            class FakeMessage:
+                text = post_text
+            fake_update = Update(update.update_id, channel_post=FakeMessage())
+            await get_weather_time(fake_update, context)
         else:
             # Respond to any other non-command message
             await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Channel post received: {post_text}")
