@@ -46,17 +46,19 @@ async def start(update: Update, context: CallbackContext):
 async def button_callback(update: Update, context: CallbackContext):
     query = update.callback_query
     logger.info(f"Button pressed with callback data: {query.data}")  # Log button press for debugging
-    await query.answer()
+    await query.answer()  # Make sure to answer the callback to stop Telegram from showing "loading..."
 
+    # Handle callback based on the button pressed
     if query.data == 'help':
-        await help_command(query, context)
+        await help_command(update, context)
     elif query.data == 'quote':
-        await quote(query, context)
+        await quote(update, context)
     elif query.data == 'weather':
-        await request_zip_code(query, context)
+        await request_zip_code(update, context)
 
 # Help command
 async def help_command(update: Update, context: CallbackContext):
+    logger.info("Help command triggered")
     help_text = (
         "Available commands:\n"
         "/start - Start the bot\n"
@@ -71,6 +73,7 @@ async def help_command(update: Update, context: CallbackContext):
 
 # Quote command
 async def quote(update: Update, context: CallbackContext):
+    logger.info("Quote command triggered")
     random_quote = random.choice(QUOTES)
     keyboard = [[InlineKeyboardButton("Back", callback_data='start')]]
     markup = InlineKeyboardMarkup(keyboard)
@@ -86,6 +89,7 @@ async def request_zip_code(update: Update, context: CallbackContext):
 
 # Process the zip code and get the weather
 async def get_weather_time(update: Update, context: CallbackContext):
+    logger.info(f"Processing zip code: {update.message.text}")
     zip_code = update.message.text.strip()
     full_zip_code = f"{zip_code},US"
 
