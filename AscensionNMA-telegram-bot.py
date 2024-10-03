@@ -76,8 +76,12 @@ async def quote(update: Update, context: CallbackContext):
 
 # Handle the weather button click and prompt for zip code
 async def request_zip_code(update: Update, context: CallbackContext):
-    msg = await update.message.reply_text("Please enter your zip code to get the current weather:")
-    asyncio.create_task(schedule_message_deletion(update.message, msg))
+    query = update.callback_query
+    msg = await query.message.reply_text("Please enter your zip code to get the current weather:")
+    
+    # Delete the button query message (initial button press)
+    asyncio.create_task(schedule_message_deletion(query.message, msg))
+    
     return GET_ZIP_CODE
 
 # Process the zip code and get the weather
@@ -97,23 +101,15 @@ async def get_weather_time(update: Update, context: CallbackContext):
         temperature = weather_data['main'].get('temp')
         weather_description = weather_data['weather'][0].get('description')
 
-        time_response = requests.get(f"http://worldtimeapi.org/api/timezone/Etc/GMT")
-        if time_response.status_code == 200:
-            time_data = time_response.json()
-            current_time = time_data['datetime']
-
-            msg = await update.message.reply_text(
-                f"Weather in {city_name}, {country} (Lat: {lat}, Lon: {lon}):\n"
-                f"Temperature: {temperature}°F\n"
-                f"Description: {weather_description}\n\n"
-                f"Current Time: {current_time}",
-            )
-        else:
-            msg = await update.message.reply_text("Sorry, I couldn't get the time for your location.")
+        msg = await update.message.reply_text(
+            f"Weather in {city_name}, {country} (Lat: {lat}, Lon: {lon}):\n"
+            f"Temperature: {temperature}°F\n"
+            f"Description: {weather_description}"
+        )
     else:
         msg = await update.message.reply_text("Invalid zip code. Please try again.")
 
-    # Schedule deletion of both the user input and the bot's response
+    # Delete user input (zip code) and bot's response
     asyncio.create_task(schedule_message_deletion(update.message, msg))
 
     return ConversationHandler.END
@@ -156,7 +152,7 @@ def main():
 
     # Conversation handler for weather request
     conv_handler = ConversationHandler(
-        entry_points=[MessageHandler(filters.Regex('^(Weather)$'), request_zip_code)],
+        entry_points=[CallbackQueryHandler(request_zip_code, pattern='^weather$')],
         states={GET_ZIP_CODE: [MessageHandler(filters.TEXT, get_weather_time)]},
         fallbacks=[]
     )
