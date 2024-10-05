@@ -33,7 +33,8 @@ QUOTES = [
     "If ifs and buts were candies and nuts, we'd all have a Merry Fucking Christmas! - Anonymous (aka Jimmy Crypto)",
     "You gotta read!!! - Tmeka",
     "Litigation is the ONLY way! - BJW and Mansa",
-    "But but but muh 5 star Passport and much beneficiary signature! Murica! - EVERY sovereign citizen ever"
+    "But but but muh 5 star Passport and much beneficiary signature! Murica! - EVERY sovereign citizen ever",
+    "Liberty, when it begins to take root, is a plant of rapid growth. - George Washington"
 ]
 
 # Define states for the conversation handler
