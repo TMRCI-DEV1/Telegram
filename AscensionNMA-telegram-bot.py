@@ -34,6 +34,7 @@ QUOTES = [
     "You gotta read!!! - Tmeka",
     "Litigation is the ONLY way! - BJW and Mansa",
     "But but but muh 5 star Passport and much beneficiary signature! Murica! - EVERY sovereign citizen ever",
+    "The most manly thing you can do is to fuck a tranny. - Freedom Olah",
     "Liberty, when it begins to take root, is a plant of rapid growth. - George Washington"
 ]
 
