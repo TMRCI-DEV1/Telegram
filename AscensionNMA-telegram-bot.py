@@ -36,6 +36,7 @@ QUOTES = [
     "But but but muh 5 star Passport and much beneficiary signature! Murica! - EVERY sovereign citizen ever",
     "The most manly thing you can do is to fuck a tranny. - Freedom Olah",
     "That's a pretty nice cock actually. - Bradford-Thomas",
+    "Getting by on coffee and anger. - Brian-Cornwell",
     "Liberty, when it begins to take root, is a plant of rapid growth. - George Washington"
 ]
 
