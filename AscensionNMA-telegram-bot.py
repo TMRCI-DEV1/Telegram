@@ -37,6 +37,7 @@ QUOTES = [
     "The most manly thing you can do is to fuck a tranny. - Freedom Olah",
     "That's a pretty nice cock actually. - Bradford-Thomas",
     "Getting by on coffee and anger. - Brian-Cornwell",
+    "What ever happened to Seabiscuit? - Bradford-Thomas",
     "Liberty, when it begins to take root, is a plant of rapid growth. - George Washington"
 ]
 
