@@ -35,6 +35,7 @@ QUOTES = [
     "Litigation is the ONLY way! - BJW and Mansa",
     "But but but muh 5 star Passport and much beneficiary signature! Murica! - EVERY sovereign citizen ever",
     "The most manly thing you can do is to fuck a tranny. - Freedom Olah",
+    "Know what we call MY grandma? WANTED - Freedom Olah",
     "That's a pretty nice cock actually. - Bradford-Thomas",
     "Getting by on coffee and anger. - Brian-Cornwell",
     "What ever happened to Seabiscuit? - Bradford-Thomas",
