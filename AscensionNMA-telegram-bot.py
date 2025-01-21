@@ -38,7 +38,8 @@ QUOTES = [
     "Know what we call MY grandma? WANTED - Freedom Olah",
     "That's a pretty nice cock actually. - Bradford-Thomas",
     "Getting by on coffee and anger. - Brian-Cornwell",
-    "What ever happened to Seabiscuit? - Bradford-Thomas",
+    "Whatever happened to Seabiscuit? - Bradford-Thomas",
+    "Tom, stop being a homophobic faggot. - Nina",
     "Life is just a Ponzi scheme that inevitably ends in a rug pull. - Jimmy CryptograFIST",
     "Liberty, when it begins to take root, is a plant of rapid growth. - George Washington"
 ]
