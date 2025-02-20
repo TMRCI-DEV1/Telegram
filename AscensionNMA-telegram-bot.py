@@ -40,6 +40,7 @@ QUOTES = [
     "Getting by on coffee and anger. - Brian-Cornwell",
     "Whatever happened to Seabiscuit? - Bradford-Thomas",
     "Tom, stop being a homophobic faggot. - Nina",
+    "Heart surgery is real. - Jimmy CryptograFIST",
     "Life is just a Ponzi scheme that inevitably ends in a rug pull. - Jimmy CryptograFIST",
     "Liberty, when it begins to take root, is a plant of rapid growth. - George Washington"
 ]
