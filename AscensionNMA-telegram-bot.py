@@ -203,7 +203,7 @@ async def handle_regular_message(update: Update, context: CallbackContext):
         await quote(update, context)
 
 def main():
-    application = Application.builder().token('7823996299:AAHOsTyetmM50ZggjK2h_NWUR-Vm0gtolvY').build()
+    application = Application.builder().token('7823996299:AAHtPVg5UriTmXyDLm713_3VA-yuscqLU8U').build()
 
     # Register the start command handler
     application.add_handler(CommandHandler('start', start))
